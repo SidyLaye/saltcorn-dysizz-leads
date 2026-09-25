@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 1.0.2
+
+- Import : les boîtes des agences sont lues proprement depuis le champ JSON « emails » de la sauvegarde.
+- Motif par défaut de l'identifiant CRM dans les liens : 8 chiffres (un bien), plus 6 (une agence) ; un motif par ligne.
+
 ## 1.0.1
 
 - Réglages Immofacile : type d'action pour noter le message du prospect dans l'historique du contact.

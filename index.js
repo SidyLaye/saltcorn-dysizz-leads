@@ -1,4 +1,4 @@
-/* dysizz-leads 1.0.1 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
+/* dysizz-leads 1.0.2 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
 "use strict";
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -10,7 +10,7 @@ var require_core = __commonJS({
   "../src/core.js"(exports2, module2) {
     "use strict";
     var PLUGIN2 = "dysizz-leads";
-    var VERSION2 = true ? "1.0.1" : "dev";
+    var VERSION2 = true ? "1.0.2" : "dev";
     var isAdmin = (req) => !!(req && req.user && req.user.role_id === 1);
     var peutVoir2 = (req) => !!(req && req.user && req.user.role_id <= 40);
     var esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -266,7 +266,7 @@ var require_conf = __commonJS({
       consentement_actif: true,
       consentement_libelle: "Demande de contact via {portail} du {date}",
       utiliser_relais: true,
-      id_crm_liens: "immo-facile-(\\d{6,})",
+      id_crm_liens: "immo-facile-(\\d{8})\\b\n/fiches/[\\w-]*_(\\d{8})/",
       prefixe_secrets: "LEADS_CRM"
     };
     var reglages = async () => {
@@ -952,7 +952,7 @@ ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R2.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts d\xE9pli\xE9s)")}
 ${U.champ("Sites d'agence (leads \xAB AC3 \xBB)", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT | selectionhabitat_com" }), "domaine | noms affich\xE9s (s\xE9par\xE9s par /) | code de l'origine")}
 ${U.champ("Objets des campagnes (r\xE9ponses \xE0 trier)", U.zone("objets_campagnes", R2.objets_campagnes || "", 3))}
-${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R2.id_crm_liens || "", 2), "ex. immo-facile-(\\d{6,})")}
+${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R2.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail \u2192 origine (JSON)", U.zone("origines_portail", typeof R2.origines_portail === "string" ? R2.origines_portail : JSON.stringify(R2.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}
 ${U.champ("Si\xE8ge (re\xE7oit toujours)", U.zone("siege", siege.filter((s) => s.actif !== false).map((s) => s.email).join("\n"), 3))}
 </div>`)}
@@ -1085,7 +1085,7 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
         return T.insertRow(row);
       };
       if (Array.isArray(F.agence)) {
-        for (const a of F.agence) await upsert(t.agences, "crm_id", { nom: a.nom, crm_id: String(a.agency_id || ""), boites: [a.boite, a.emails].filter(Boolean).join(", "), actif: true });
+        for (const a of F.agence) await upsert(t.agences, "crm_id", { nom: a.nom, crm_id: String(a.agency_id || ""), boites: [...new Set([a.boite].concat(String(a.emails || "").match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g) || []).filter(Boolean).map((x) => String(x).toLowerCase()))].join(", "), actif: true });
         log.push(`${F.agence.length} agences`);
       }
       if (Array.isArray(F.origine)) {

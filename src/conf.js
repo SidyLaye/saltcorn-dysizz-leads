@@ -7,7 +7,7 @@ const liste = (s) => String(s || "").split(/[\s,;]+/).map((x) => x.trim()).filte
 const json = (s, def) => { if (!s) return def; if (typeof s === "object") return s; try { return JSON.parse(s); } catch (e) { return def; } };
 const DEFAUT = {
   crm: "immofacile", mode: "ombre", envoi_mails: false, consentement_actif: true, consentement_libelle: "Demande de contact via {portail} du {date}", utiliser_relais: true,
-  id_crm_liens: "immo-facile-(\\d{6,})", prefixe_secrets: "LEADS_CRM",
+  id_crm_liens: "immo-facile-(\\d{8})\\b\n/fiches/[\\w-]*_(\\d{8})/", prefixe_secrets: "LEADS_CRM",
 };
 
 const reglages = async () => {

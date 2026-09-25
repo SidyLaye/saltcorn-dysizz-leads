@@ -52,7 +52,7 @@ ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts dépliés)")}
 ${U.champ("Sites d'agence (leads « AC3 »)", U.zone("sites", sitesTexte(R.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT | selectionhabitat_com" }), "domaine | noms affichés (séparés par /) | code de l'origine")}
 ${U.champ("Objets des campagnes (réponses à trier)", U.zone("objets_campagnes", R.objets_campagnes || "", 3))}
-${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R.id_crm_liens || "", 2), "ex. immo-facile-(\\d{6,})")}
+${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail → origine (JSON)", U.zone("origines_portail", typeof R.origines_portail === "string" ? R.origines_portail : JSON.stringify(R.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}
 ${U.champ("Siège (reçoit toujours)", U.zone("siege", siege.filter((s) => s.actif !== false).map((s) => s.email).join("\n"), 3))}
 </div>`)}
@@ -145,7 +145,7 @@ const importPost = async (req, res) => {
   if (!isAdmin(req)) return refuse(res);
   const F = lireFichiers(req), t = await tables(), log = [];
   const upsert = async (T, cle, row) => { const ex = await T.getRow({ [cle]: row[cle] }); if (ex) { await T.updateRow(row, ex.id); return ex.id; } return T.insertRow(row); };
-  if (Array.isArray(F.agence)) { for (const a of F.agence) await upsert(t.agences, "crm_id", { nom: a.nom, crm_id: String(a.agency_id || ""), boites: [a.boite, a.emails].filter(Boolean).join(", "), actif: true }); log.push(`${F.agence.length} agences`); }
+  if (Array.isArray(F.agence)) { for (const a of F.agence) await upsert(t.agences, "crm_id", { nom: a.nom, crm_id: String(a.agency_id || ""), boites: [...new Set([a.boite].concat(String(a.emails || "").match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g) || []).filter(Boolean).map((x) => String(x).toLowerCase()))].join(", "), actif: true }); log.push(`${F.agence.length} agences`); }
   if (Array.isArray(F.origine)) { for (const o of F.origine) await upsert(t.origines, "code", { code: o.code, libelle: o.libelle, crm_id: String(o.origin_id || "") }); log.push(`${F.origine.length} origines`); }
   if (Array.isArray(F.contact_negociateur)) {
     const assist = new Map();

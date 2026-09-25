@@ -1,6 +1,6 @@
 {
   "name": "dysizz-leads",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Plateforme de leads immobiliers pour Saltcorn (multi-clients) : lecture des mails de portails sans IA, rapprochement du bien, contact, consentement anti-démarchage, règles d'envoi par négociateur, congés et mi-temps, suivi des demandes. CRM : Immofacile, Salesforce. Construite avec les blocs de dysizz-ui et dysizz-flow.",
   "main": "index.js",
   "author": "Sidy Laye",
