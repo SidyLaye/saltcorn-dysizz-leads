@@ -6,20 +6,23 @@ const { flowApi } = require("./core");
 
 const ECOUTEUR = "leads";
 const WF = {
-  name: "ld_traitement", when: "DzfMailRecu", channel: ECOUTEUR,
-  description: "dysizz-leads : chaque mail reçu par l'écouteur « leads » est lu, rapproché, routé et rangé dans ld_leads. Mode ombre par défaut. Aucun mail n'est envoyé.",
+  name: "ld_traitement", when: "DzfMailRecu", channel: ECOUTEUR, version: 2,
+  description: "dysizz-leads v2 : chaque mail reçu par l'écouteur « leads » est traité une seule fois (dossier prospect × bien, catalogue local, CRM selon le mode). Mode ombre par défaut. Aucun mail n'est envoyé.",
   steps: [
-    { name: "conf", action_name: "dzx_leads_conf", configuration: {} },
-    { name: "mail", action_name: "dzf_table_obtenir", configuration: { table: MAILS, id: "{{id}}", sortie: "mail" } },
-    { name: "une_fois", action_name: "dzf_idempotence", configuration: { cle: "ld-{{mail.id}}", duree_h: 720 } },
-    { name: "traiter", action_name: "dzf_lead_traiter", configuration: { mail: "{{mail}}", configuration: "{{leads_conf}}", crm: "{{leads_crm.type}}", crm_reglages: "{{leads_crm.reglages}}", prefixe_secrets: "{{leads_crm.prefixe}}", mode: "{{leads_crm.mode}}" } },
-    { name: "enregistrer", action_name: "dzx_leads_enregistrer", configuration: { dossier: "{{dossier}}", mail: "{{mail}}" } },
+    { name: "une_fois", action_name: "dzf_idempotence", configuration: { cle: "ld-{{id}}", duree_h: 720 } },
+    { name: "traiter", action_name: "dzx_leads_traiter", configuration: { id: "{{id}}" } },
   ],
+};
+/* Le workflow installé est-il la version actuelle ? (sinon « Installer / réparer » le réécrit) */
+const aJour = async () => {
+  const Trigger = require("@saltcorn/data/models/trigger");
+  const t = Trigger.findOne({ name: WF.name });
+  return !!(t && String(t.description || "").startsWith("dysizz-leads v" + WF.version));
 };
 
 const manque = () => {
   const st = require("@saltcorn/data/db/state").getState();
-  const need = ["dzf_lead_traiter", "dzf_table_obtenir", "dzf_idempotence", "dzx_leads_conf"];
+  const need = ["dzf_idempotence", "dzx_leads_traiter"];
   return need.filter((a) => !st.actions || !st.actions[a]);
 };
 
@@ -35,9 +38,9 @@ const installer = async ({ reecrire = false } = {}) => {
   let t = Trigger.findOne({ name: WF.name });
   const def = { name: WF.name, description: WF.description, action: "Workflow", when_trigger: WF.when, channel: WF.channel, configuration: {}, min_role: 1 };
   if (!t) { t = await Trigger.create(def); t = Trigger.findOne({ name: WF.name }) || t; log.push("workflow ld_traitement créé"); }
-  else if (reecrire) { await Trigger.update(t.id, def); log.push("workflow ld_traitement réécrit"); }
+  else if (reecrire || !(await aJour())) { await Trigger.update(t.id, def); log.push("workflow ld_traitement réécrit"); }
   else { log.push("workflow ld_traitement déjà là (gardé tel quel)"); }
-  if (reecrire || !(await WS.find({ trigger_id: t.id })).length) {
+  if (reecrire || !(await WS.find({ trigger_id: t.id })).length || !(await WS.find({ trigger_id: t.id, action_name: "dzx_leads_traiter" })).length) {
     await db.deleteWhere("_sc_workflow_steps", { trigger_id: t.id });
     WF.steps.forEach((s, i) => { s.next_step = WF.steps[i + 1] ? WF.steps[i + 1].name : ""; });
     for (let i = 0; i < WF.steps.length; i++) { const s = WF.steps[i]; await WS.create({ trigger_id: t.id, name: s.name, action_name: s.action_name, configuration: s.configuration, next_step: s.next_step, only_if: "", initial_step: i === 0 }); }
@@ -64,4 +67,4 @@ const etat_ecouteur = async () => {
   return E ? E.getRow({ nom: ECOUTEUR }) : null;
 };
 
-module.exports = { installer, regler_ecouteur, etat_ecouteur, ECOUTEUR, WF, manque };
+module.exports = { installer, regler_ecouteur, etat_ecouteur, ECOUTEUR, WF, manque, aJour };

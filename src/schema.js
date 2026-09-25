@@ -8,11 +8,13 @@ const T = {
     ["crm", "String"], ["crm_reglages", "String"], ["prefixe_secrets", "String"], ["mode", "String"], ["envoi_mails", "Bool"],
     ["consentement_actif", "Bool"], ["consentement_libelle", "String"], ["utiliser_relais", "Bool"],
     ["domaines_agence", "String"], ["sites", "String"], ["objets_campagnes", "String"], ["id_crm_liens", "String"], ["origines_portail", "String"],
-    ["boite_ecouteur", "String"], ["maj_le", "Date"]] },
+    ["boite_ecouteur", "String"], ["maj_le", "Date"],
+    ["etapes", "String"], ["notifier_relances", "String"], ["marges_projet", "String"], ["commentaire_max", "Integer"], ["retention_jours", "Integer"],
+    ["action_lead", "String"], ["catalogue_synchro_le", "Date"], ["catalogue_etat", "String"]] },
   agences: { name: "ld_agences", desc: "Agences", fields: [["nom", "String", { required: true }], ["crm_id", "String"], ["boites", "String"], ["negociateur_defaut", "String"], ["actif", "Bool"]] },
   personnes: { name: "ld_personnes", desc: "Négociateurs et assistant(e)s", fields: [
     ["nom", "String", { required: true }], ["email", "String"], ["role", "String"], ["crm_id", "String"], ["agence_crm_id", "String"],
-    ["assistante", "Integer"], ["temps", "String"], ["jours", "String"], ["remplacant_hors_jours", "String"], ["telephone", "String"], ["actif", "Bool"]] },
+    ["assistante", "Integer"], ["temps", "String"], ["jours", "String"], ["remplacant_hors_jours", "String"], ["telephone", "String"], ["actif", "Bool"], ["alias", "String"]] },
   regles: { name: "ld_regles_envoi", desc: "Règles d'envoi par négociateur ou groupe", fields: [
     ["libelle", "String", { required: true }], ["tous", "Bool"], ["negociateurs", "String"], ["couper_negociateur", "Bool"], ["assistante", "String"],
     ["assistante_remplacante", "String"], ["adresses_libres", "String"], ["actif", "Bool"], ["maj_le", "Date"]] },
@@ -26,7 +28,18 @@ const T = {
     ["reference", "String"], ["bien_crm", "String"], ["bien_ref_crm", "String"], ["bien_methode", "String"], ["bien_confiance", "String"],
     ["agence", "String"], ["negociateur", "String"], ["origine", "String"], ["site", "String"], ["destinataires", "String"],
     ["motifs", "String"], ["alertes", "String"], ["mode", "String"], ["actions", "String"], ["dossier", "String"], ["duree_ms", "Integer"],
-    ["ancien_statut", "String"], ["ancien_bien", "String"], ["ancien_destinataires", "String"]] },
+    ["ancien_statut", "String"], ["ancien_bien", "String"], ["ancien_destinataires", "String"], ["dossier_id", "Integer"], ["role", "String"]] },
+  dossiers: { name: "ld_dossiers", desc: "Dossiers (un prospect × un bien)", index: ["email", "relais", "tel9", "bien_crm"], fields: [
+    ["relais", "String"], ["email", "String"], ["telephone", "String"], ["tel9", "String"], ["reference", "String"], ["bien_crm", "String"], ["bien_ref", "String"],
+    ["contact_crm", "String"], ["recherche_crm", "String"], ["consentement", "Bool"], ["negociateur", "String"], ["agence", "String"], ["portail", "String"], ["nom", "String"],
+    ["statut", "String"], ["premiere_demande", "Date"], ["reponse_le", "Date"], ["derniere_activite", "Date"], ["nb_mails", "Integer"], ["cree_le", "Date"], ["maj_le", "Date"]] },
+  evenements: { name: "ld_evenements", desc: "Messages des dossiers (conversation)", index: ["dossier"], fields: [
+    ["dossier", "Integer", { required: true }], ["mail_id", "Integer"], ["type", "String"], ["role", "String"], ["auteur", "String"], ["via", "String"], ["quand", "Date"], ["texte", "String"], ["source", "String"], ["empreinte", "String"]] },
+  biens: { name: "ld_biens", desc: "Catalogue local des biens du CRM (synchronisé)", index: ["crm_id", "reference"], fields: [
+    ["crm_id", "String", { required: true }], ["reference", "String"], ["prix", "Float"], ["surface", "Float"], ["pieces", "Integer"], ["chambres", "Integer"], ["type", "String"],
+    ["ville", "String"], ["code_postal", "String"], ["negociateur", "String"], ["agence", "String"], ["proprietaire", "String"], ["supprime", "Bool"], ["synchro_le", "Date"]] },
+  portails: { name: "ld_portails", desc: "Portails déclarés par le client (sans code)", fields: [
+    ["nom", "String", { required: true }], ["domaines", "String"], ["objets_lead", "String"], ["objets_non_lead", "String"], ["libelles", "String"], ["reference", "String"], ["nature", "String"], ["actif", "Bool"]] },
   demandes: { name: "ld_demandes", desc: "Demandes d'évolution et incidents", fields: [
     ["titre", "String", { required: true }], ["description", "String"], ["urgence", "String"], ["statut", "String"], ["demandeur", "String"], ["cree_le", "Date"], ["maj_le", "Date"]] },
   etapes: { name: "ld_demande_etapes", desc: "Historique des demandes", fields: [["demande", "Integer", { required: true }], ["statut", "String"], ["quand", "Date"], ["note", "String"], ["par", "String"]] },
@@ -48,6 +61,10 @@ const creer = async () => {
     const manque = d.fields.filter(([n]) => !have.has(n));
     for (const [name, type, o] of manque) await Field.create({ table: t, name, label: name, type, ...(o || {}), required: false });
     if (manque.length) { await st.refresh_tables(true); t = Table.findOne({ name: d.name }); }
+    /* index pour retrouver vite un dossier ou un bien (sans effet s'il existe déjà) */
+    /* « if not exists » : une requête en erreur annulerait la transaction en cours (installation d'un plugin) */
+    const db = require("@saltcorn/data/db");
+    if (!db.isSQLite) for (const f of d.index || []) await db.query(`create index if not exists "${d.name}_${f}_idx" on "${db.getTenantSchema()}"."${d.name}" ("${f}")`);
     out[k] = t;
   }
   return out;

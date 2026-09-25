@@ -190,7 +190,7 @@ const importPost = async (req, res) => {
 const rejouer = async (req, res) => {
   if (!isAdmin(req)) return refuse(res);
   const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
-  const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.id limit 50`)).rows.map((r) => r.id);
+  const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.date_envoi, m.id limit 50`)).rows.map((r) => r.id);
   let ok = 0, ko = 0;
   for (const id of ids) { try { await retraiter(id, { forcerOmbre: true }); ok++; } catch (e) { ko++; } }
   go(res, "/leads/import", `${ok} mail(s) traité(s) en ombre${ko ? `, ${ko} en échec` : ""}`, !!ko && !ok);

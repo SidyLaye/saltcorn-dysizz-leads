@@ -17,14 +17,19 @@ CRM disponibles : **Immofacile** (API V2) et **Salesforce** (objets et champs r�
 
 ## Ce qui se passe pour chaque mail
 
-1. **Écoute** : la boîte est écoutée en temps réel (IMAP IDLE), en lecture seule. Le mail est rangé dans `ld_mails`, puis le workflow `ld_traitement` démarre.
-2. **Lecture sans IA** : 30 portails reconnus. Chaque champ dit d'où il vient (« fiche:email », « portail:seloger », « lien »…). Les réponses automatiques, les rapports anti-spam et les newsletters sont écartés ; les transferts internes (« TR: ») sont dépliés ; un lead venant du site de l'agence (AC3) prend comme origine **le site** (selectionhabitat.com, agence-hamilton.com…), plus « ac3 ».
-3. **Bien** (procédure « non-conformes ») : identifiant CRM s'il est donné → référence complète → référence moins le dernier caractère → segments de droite à gauche → critères un par un (type, pièces, surface, prix, ville ; retour arrière si zéro, arrêt dès qu'il en reste un). Chaque bien trouvé est comparé au mail (prix, ville, code postal, surface, pièces) : contradiction = rejet et on continue.
-4. **Contact** : priorité à l'e-mail, puis au contact le plus récemment créé. On complète les champs vides, on n'écrase jamais.
-5. **Consentement anti-démarchage** : « Demande de contact via Leboncoin du 09/09/2026 », avec le mail d'origine joint en preuve (.eml). Libellé réglable, à valider par le client.
-6. **Destinataires** : négociateur du bien, son assistant(e), les règles d'envoi, les congés et le mi-temps, le siège.
+L'unité de travail est le **dossier** : un prospect × un bien. Un mail crée un dossier, le complète (relance, réponse du prospect) ou y ajoute la réponse de l'équipe. Le détail et les raisons sont dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Tout est gardé dans la fiche du lead : ce qui a été lu, les étapes de recherche du bien, la décision sur le contact, les actions CRM, les destinataires et pourquoi.
+1. **Écoute** : la boîte est écoutée en temps réel (IMAP IDLE), en lecture seule, par un seul serveur à la fois. Le mail est rangé dans `ld_mails` avec ses en-têtes de fil et sa source `.eml`.
+2. **Lecture sans IA** : 30 portails dans le code, plus ceux que le client déclare lui-même (écran Chaîne). Un expéditeur inconnu dont le mail ressemble à une fiche de lead est traité et signalé « à déclarer ». Chaque champ dit d'où il vient.
+3. **Fil** : le mail est rattaché au dossier du prospect (relais du portail, e-mail, téléphone, référence citée). Deux mails du même prospect ne sont jamais traités en même temps.
+   - Une réponse d'un négociateur **n'est jamais un lead** : elle rejoint le dossier et donne le délai de réponse.
+   - Une réponse du prospect sans référence reprend le bien du dossier.
+4. **Bien** : rapprochement sur le **catalogue local** (`ld_biens`, mis à jour chaque heure et par webhook), le CRM seulement en secours. Procédure « non-conformes » : identifiant CRM → référence complète → moins le dernier caractère → segments → critères. Une preuve faible doit être confirmée par un fait qui distingue le bien.
+5. **Contact** : priorité à l'e-mail, puis au plus récemment créé ; on complète, on n'écrase jamais ; un contact sans négociateur est rattaché à celui du bien.
+6. **CRM** : suivi du bien ; **projet de recherche** créé une fois par dossier à partir des critères du bien demandé (marges réglables) ; son **commentaire contient toute la conversation**, reconstruite à chaque mail (pas de doublon) ; consentement anti-démarchage une fois par contact, avec le vrai `.eml` en preuve.
+7. **Destinataires** : négociateur du bien, assistant(e), règles, congés, mi-temps, siège. Une relance d'un dossier suivi ne va qu'au négociateur (réglable).
+
+Chaque étape peut être coupée par client (écran Chaîne) : un client peut ne prendre que la lecture et le tableau de bord, un autre tout.
 
 ## Mode ombre (par défaut)
 
@@ -35,11 +40,13 @@ Le CRM est **seulement lu** ; les écritures sont notées (et bloquées au nivea
 | Écran | Rôle |
 |---|---|
 | Tableau de bord | prêts, à vérifier, à trier, temps de traitement ; par portail ; motifs ; absents de la semaine ; demandes en cours ; alertes |
+| Dossiers | un dossier par prospect × bien : conversation complète, commentaire écrit dans le CRM, délai de première réponse, dossiers sans réponse depuis plus de 24 h |
 | Leads | liste filtrable (statut, portail, période, recherche, écarts avec l'ancien système) et fiche complète de chaque lead, bouton « retraiter » |
 | Envoi | **tester** : les adresses exactes du prochain lead d'un négociateur, à une date donnée ; règles par négociateur ou groupe (couper le négociateur, garder / couper / remplacer l'assistant(e), adresses en plus sans limite) ; l'équipe |
 | Personne | temps plein ou mi-temps (jours travaillés, remplaçant les autres jours), congés |
 | Absences | semaine : qui est absent, qui prend le relais ; retour automatique après la date de fin |
 | Demandes | suivi Reçue → Prise en compte → En cours → Terminée → Mise en ligne, date et note à chaque étape ; urgence Bloquant (alerte immédiate), Important, Confort |
+| Chaîne | étapes actives, relances, marges du projet de recherche, taille du commentaire, conservation des mails, catalogue des biens et webhook, portails déclarés, nouveaux expéditeurs |
 | Réglages | CRM et secrets (rangés chiffrés dans le coffre de dysizz-flow), mode, boîte écoutée, consentement, sites d'agence, domaines, siège |
 | Import | référentiels depuis une sauvegarde Saltcorn (agences, négociateurs, assistant(e)s, origines, destinataires) ; rejouer en ombre les mails reçus |
 
@@ -52,10 +59,22 @@ Accès : administrateurs et rôle « staff » ; les réglages, l'import et les �
 3. `/leads/reglages` : CRM (site_id et identifiants), boîte à écouter, sites d'agence, siège ; « Installer / réparer le workflow » ; « Tester la connexion au CRM ».
 4. Laisser tourner en ombre, comparer dans Leads (filtre « écarts avec l'ancien système ») ; passer en réel quand tout est bon.
 
+## Exploitation
+
+- Plusieurs serveurs derrière un répartiteur : une boîte n'est écoutée que par un serveur (verrou Postgres) ; un mail n'est traité qu'une fois (Message-ID + idempotence) ; un dossier n'est modifié que par un traitement à la fois.
+- Chaque heure (un seul serveur) : biens modifiés dans le CRM, reprise des mails restés sans traitement, effacement du texte des vieux mails si une durée de conservation est réglée.
+- Webhook du CRM : `POST /leads/crochet/crm`, clé dans l'en-tête `X-Api-Key` (rangée chiffrée), réponse immédiate.
+
 ## Développer
 
 ```
 cd tools && npm install && node build.mjs   # index.js généré depuis src/
 node tests/run.cjs
 ```
-Les tests du moteur sont dans dysizz-flow (`tests/leads.test.cjs`, mails fictifs).
+Les tests du moteur sont dans dysizz-flow : `tests/leads.test.cjs` (portails), `tests/mutations.test.cjs` (chaque mail abîmé exprès : fins de ligne, lignes recoupées, HTML seul, tableaux, espaces insécables, champ manquant), `tests/fil.test.cjs` (conversation complète et Immofacile en réel contre un faux serveur).
+
+Non-régression sur un corpus réel (jamais versionné, données personnelles) :
+
+```
+node ../saltcorn-dysizz-flow/tools/corpus.cjs --mails mails.jsonl --conf conf.json --biens biens.json --reference reference.json
+```

@@ -8,7 +8,7 @@ const plugin = require("../index.js");
 assert.strictEqual(plugin.plugin_name, "dysizz-leads");
 for (const u of ["/leads", "/leads/liste", "/leads/l/:id", "/leads/envoi", "/leads/absences", "/leads/demandes", "/leads/reglages", "/leads/import"]) assert(plugin.routes.some((r) => r.url === u), "route " + u);
 const blocs = plugin.dysizz_flow_blocks();
-assert.deepStrictEqual(blocs.map((b) => b.name), ["dzx_leads_conf", "dzx_leads_enregistrer"]);
+assert.deepStrictEqual(blocs.map((b) => b.name), ["dzx_leads_conf", "dzx_leads_traiter", "dzx_leads_enregistrer"]);
 assert(blocs.every((b) => /^dzx_/.test(b.name) && typeof b.run === "function"));
 /* toute route qui écrit est en POST (protégée par le jeton CSRF de Saltcorn) */
 assert(plugin.routes.filter((r) => /supprimer|save|installer|rejouer|retraiter|decision|etape|tester/.test(r.url)).every((r) => r.method === "post"));

@@ -1,5 +1,18 @@
 # Journal des versions
 
+## 1.1.0
+
+- **Dossiers** (prospect × bien) : tous les mails d'un même prospect sur un même bien sont regroupés ; la conversation complète est gardée (`ld_dossiers`, `ld_evenements`) et visible dans l'écran Dossiers.
+- **Réponse d'un négociateur** : n'est plus jamais traitée comme un lead ; elle rejoint le dossier et donne le délai de première réponse (tableau de bord : délai médian, dossiers sans réponse depuis 24 h).
+- **Commentaire CRM** = conversation entière, reconstruit à chaque mail (pas de doublon), dans le projet de recherche du dossier.
+- **Catalogue local des biens** (`ld_biens`) : synchronisation complète puis chaque heure, webhook `POST /leads/crochet/crm` (clé X-Api-Key), rapprochement en local.
+- **Chaîne à la carte** : étapes actives par client, notification des relances, marges du projet de recherche, taille du commentaire, conservation des mails.
+- **Portails déclarés sans code** et liste des nouveaux expéditeurs à déclarer.
+- **Plusieurs serveurs** : verrou par dossier, un seul serveur pour les tâches horaires ; reprise automatique des mails restés sans traitement.
+- Correction : l'installation échouait au 2e démarrage (création d'index dans la transaction d'installation) ; les blocs `dzx_leads_*` sont enregistrés quel que soit l'ordre de chargement des plugins.
+- Workflow `ld_traitement` v2 (un seul bloc `dzx_leads_traiter`), réécrit par « Installer / réparer ».
+- Documentation : `docs/ARCHITECTURE.md`.
+
 ## 1.0.2
 
 - Import : les boîtes des agences sont lues proprement depuis le champ JSON « emails » de la sauvegarde.

@@ -12,6 +12,8 @@ const L = require("./pages/leads");
 const E = require("./pages/equipe");
 const D = require("./pages/demandes");
 const R = require("./pages/reglages");
+const DO = require("./pages/dossiers");
+const CH = require("./pages/chaine");
 
 const asset = (req, res) => {
   if (req.params.file !== "ld.css") return res.status(404).send("");
@@ -26,13 +28,28 @@ module.exports = {
   plugin_name: PLUGIN,
   dysizz_flow_blocks: () => require("./blocks"),
   dysizz_hub: async (req) => (peutVoir(req) ? [{ group: "Mes applis", label: "Leads", sub: "leads immobiliers : portails, biens, envoi", url: "/leads", icon: "fas fa-bullseye", color: "#2457d6", size: "m", min_role: 40 }] : []),
-  onLoad: async () => { try { await require("./schema").tables(); } catch (e) { /* 1er démarrage : dysizz-flow peut ne pas être prêt */ } },
+  onLoad: async () => {
+    try { await require("./schema").tables(); } catch (e) { /* 1er démarrage : dysizz-flow peut ne pas être prêt */ }
+    try { require("./taches").planifier(); } catch (e) { /* rien */ }
+    /* nos blocs (dzx_leads_*) dans dysizz-flow, quel que soit l'ordre de chargement des plugins */
+    try { const api = require("./core").flowApi(); if (api && api.enregistrerBlocsExternes) api.enregistrerBlocsExternes(); } catch (e) { /* rien */ }
+  },
   routes: [
     { url: "/leads", method: "get", callback: garde(L.tableau) },
     { url: "/leads/liste", method: "get", callback: garde(L.liste) },
     { url: "/leads/l/:id", method: "get", callback: garde(L.fiche) },
     { url: "/leads/l/:id/retraiter", method: "post", callback: garde(L.retraiterPost) },
     { url: "/leads/l/:id/decision", method: "post", callback: garde(L.decisionPost) },
+    { url: "/leads/dossiers", method: "get", callback: garde(DO.liste) },
+    { url: "/leads/dossier/:id", method: "get", callback: garde(DO.fiche) },
+    { url: "/leads/chaine", method: "get", callback: garde(CH.page) },
+    { url: "/leads/chaine", method: "post", callback: garde(CH.enregistrer) },
+    { url: "/leads/chaine/webhook", method: "post", callback: garde(CH.webhookCle) },
+    { url: "/leads/portails", method: "post", callback: garde(CH.portailAjouter) },
+    { url: "/leads/portails/:id/supprimer", method: "post", callback: garde(CH.portailRetirer) },
+    { url: "/leads/catalogue", method: "post", callback: garde(CH.catalogue) },
+    /* webhook du CRM : appelé de l'extérieur (clé dans X-Api-Key), donc sans jeton CSRF */
+    { url: "/leads/crochet/crm", method: "post", noCsrf: true, callback: CH.crochet },
     { url: "/leads/envoi", method: "get", callback: garde(E.envoi) },
     { url: "/leads/envoi/regle", method: "post", callback: garde(E.regleSave) },
     { url: "/leads/envoi/regle/:id/supprimer", method: "post", callback: garde(E.regleSuppr) },

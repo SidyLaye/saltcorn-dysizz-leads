@@ -36,10 +36,12 @@ const tableau = async (req, res) => {
   const t = await tables();
   const dem = await t.demandes.getRows({}, { orderBy: "cree_le", orderDesc: true, limit: 50 });
   const ouvertes = dem.filter((d) => !["Terminée", "Mise en ligne"].includes(d.statut));
+  const DC = await require("./dossiers").chiffres().catch(() => ({ nouveaux: 0, sans_reponse: 0, mediane_ms: null }));
   let absents = [];
   try { const { conf } = await charger(); absents = flowApi().leads.absentsSemaine(conf.routage, new Date()); } catch (e) { /* rien */ }
   const html = `<div class="ld-kpis">
 ${U.kpi(p1, "prêts aujourd'hui", { ton: "ok", lien: "/leads/liste?statut=pret&periode=1" })}${U.kpi(v1, "à vérifier aujourd'hui", { ton: v1 ? "warn" : "", lien: "/leads/liste?statut=a_verifier&periode=1" })}${U.kpi(t1, "à trier aujourd'hui", { ton: "info", lien: "/leads/liste?statut=a_trier&periode=1" })}${U.kpi(i1, "non-leads écartés", { lien: "/leads/liste?statut=ignore&periode=1" })}
+${U.kpi(DC.nouveaux, "dossiers ouverts sur 7 jours", { lien: "/leads/dossiers" })}${U.kpi(require("./dossiers").duree(DC.mediane_ms), "délai de 1re réponse (médiane, 30 j)", { ton: DC.mediane_ms != null && DC.mediane_ms > 864e5 ? "warn" : "ok" })}${U.kpi(DC.sans_reponse, "sans réponse depuis plus de 24 h", { ton: DC.sans_reponse ? "ko" : "", lien: "/leads/dossiers?sans_reponse=1" })}
 ${U.kpi(p7, "prêts sur 7 jours", { lien: "/leads/liste?statut=pret&periode=7" })}${U.kpi(v7, "à vérifier sur 7 jours", { ton: v7 ? "warn" : "", lien: "/leads/liste?statut=a_verifier&periode=7" })}${U.kpi(t7, "à trier sur 7 jours", { lien: "/leads/liste?statut=a_trier&periode=7" })}${U.kpi(moy + " ms", "temps moyen de traitement")}</div>
 <div class="ld-grille ld-g2">
 ${U.carte("Par portail · 7 jours", U.table(["Portail", "Leads", "Prêts", "À vérifier", "Taux"], parPortail.map((r) => [`<a href="/leads/liste?portail=${encodeURIComponent(r.p)}&periode=7">${esc(r.p)}</a>`, r.n, r.ok, r.v ? `<span class="ld-badge warn">${r.v}</span>` : 0, Math.round((100 * r.ok) / Math.max(1, r.n)) + " %"])))}
@@ -109,6 +111,7 @@ const fiche = async (req, res) => {
   const D = d.destinataires || { liste: [], trace: [] };
   const ex = (d.execution && d.execution.resultats) || [];
   const html = `<div class="ld-actions" style="margin:-4px 0 12px">${U.badge(l.decision || l.statut)} ${U.pill(l.portail || "portail inconnu")} ${U.pill(l.nature)} ${l.mode === "reel" ? '<span class="ld-reel">RÉEL</span>' : '<span class="ld-ombre">OMBRE</span>'}
+${l.dossier_id ? `<a class="btn btn-sm btn-outline-secondary" href="/leads/dossier/${l.dossier_id}"><i class="fas fa-comments"></i> Dossier et conversation</a>` : ""}
 <form method="post" action="/leads/l/${l.id}/retraiter" class="ld-inline">${hidden(req)}<button class="btn btn-sm btn-outline-primary"><i class="fas fa-redo"></i> Retraiter (ombre)</button></form>
 <form method="post" action="/leads/l/${l.id}/decision" class="ld-inline">${hidden(req)}${U.select("decision", [["", "Décision…"], ["traite", "Traité à la main"], ["ignore", "Pas un lead"], ["a_verifier", "À revoir"]], "")}<button class="btn btn-sm btn-outline-secondary">Enregistrer</button></form></div>
 ${l.motifs ? `<div class="ld-flash ko">${esc(l.motifs)}</div>` : ""}${l.alertes ? `<div class="ld-flash" style="background:rgba(161,92,0,.1)">${esc(l.alertes)}</div>` : ""}

@@ -2,7 +2,7 @@
 "use strict";
 const { esc, VERSION } = require("./core");
 
-const ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "Réglages", "fas fa-sliders-h"], ["import", "Import", "fas fa-file-import"]];
+const ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Dossiers", "fas fa-comments"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "Réglages", "fas fa-sliders-h"], ["chaine", "Chaîne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
 
 const flash = (req) => { const q = req.query || {}; return q.ok ? `<div class="ld-flash ok">${esc(q.ok)}</div>` : q.err ? `<div class="ld-flash ko">${esc(q.err)}</div>` : ""; };
 
@@ -12,7 +12,7 @@ const page = (req, res, titre, actif, html, { bandeau = "" } = {}) => res.sendWr
 ${bandeau}${flash(req)}<h1 class="ld-titre">${esc(titre)}</h1>${html}</div>`.replace(/\{\{/g, "&#123;&#123;").replace(/\}\}/g, "&#125;&#125;") }],
 });
 
-const STATUTS = { pret: ["Prêt", "ok"], a_verifier: ["À vérifier", "warn"], a_trier: ["À trier", "info"], ignore: ["Ignoré", "mute"], alerte: ["Alerte", "ko"], erreur: ["Erreur", "ko"], traite: ["Traité", "ok"] };
+const STATUTS = { suivi: ["Suivi (réponse)", "info"], pret: ["Prêt", "ok"], a_verifier: ["À vérifier", "warn"], a_trier: ["À trier", "info"], ignore: ["Ignoré", "mute"], alerte: ["Alerte", "ko"], erreur: ["Erreur", "ko"], traite: ["Traité", "ok"] };
 const badge = (statut) => { const [l, c] = STATUTS[statut] || [statut || "—", "mute"]; return `<span class="ld-badge ${c}">${esc(l)}</span>`; };
 const pill = (texte, c = "mute") => `<span class="ld-badge ${c}">${esc(texte)}</span>`;
 const kpi = (valeur, label, { ton = "", lien = "", detail = "" } = {}) => `<${lien ? `a href="${esc(lien)}"` : "div"} class="ld-kpi ${ton}"><b>${esc(valeur)}</b><span>${esc(label)}</span>${detail ? `<small>${esc(detail)}</small>` : ""}</${lien ? "a" : "div"}>`;

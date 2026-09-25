@@ -1,4 +1,4 @@
-/* dysizz-leads 1.0.2 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
+/* dysizz-leads 1.1.0 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
 "use strict";
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -10,7 +10,7 @@ var require_core = __commonJS({
   "../src/core.js"(exports2, module2) {
     "use strict";
     var PLUGIN2 = "dysizz-leads";
-    var VERSION2 = true ? "1.0.2" : "dev";
+    var VERSION2 = true ? "1.1.0" : "dev";
     var isAdmin = (req) => !!(req && req.user && req.user.role_id === 1);
     var peutVoir2 = (req) => !!(req && req.user && req.user.role_id <= 40);
     var esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -43,7 +43,7 @@ var require_ui = __commonJS({
   "../src/ui.js"(exports2, module2) {
     "use strict";
     var { esc, VERSION: VERSION2 } = require_core();
-    var ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "R\xE9glages", "fas fa-sliders-h"], ["import", "Import", "fas fa-file-import"]];
+    var ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Dossiers", "fas fa-comments"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "R\xE9glages", "fas fa-sliders-h"], ["chaine", "Cha\xEEne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
     var flash = (req) => {
       const q = req.query || {};
       return q.ok ? `<div class="ld-flash ok">${esc(q.ok)}</div>` : q.err ? `<div class="ld-flash ko">${esc(q.err)}</div>` : "";
@@ -53,7 +53,7 @@ var require_ui = __commonJS({
 <nav class="ld-nav"><span class="ld-marque"><i class="fas fa-bullseye"></i>Leads</span>${ONGLETS.map(([u, l, i]) => `<a href="/leads${u ? "/" + u : ""}" class="${actif === u ? "on" : ""}"><i class="${i}"></i>${l}</a>`).join("")}</nav>
 ${bandeau}${flash(req)}<h1 class="ld-titre">${esc(titre)}</h1>${html}</div>`.replace(/\{\{/g, "&#123;&#123;").replace(/\}\}/g, "&#125;&#125;") }]
     });
-    var STATUTS = { pret: ["Pr\xEAt", "ok"], a_verifier: ["\xC0 v\xE9rifier", "warn"], a_trier: ["\xC0 trier", "info"], ignore: ["Ignor\xE9", "mute"], alerte: ["Alerte", "ko"], erreur: ["Erreur", "ko"], traite: ["Trait\xE9", "ok"] };
+    var STATUTS = { suivi: ["Suivi (r\xE9ponse)", "info"], pret: ["Pr\xEAt", "ok"], a_verifier: ["\xC0 v\xE9rifier", "warn"], a_trier: ["\xC0 trier", "info"], ignore: ["Ignor\xE9", "mute"], alerte: ["Alerte", "ko"], erreur: ["Erreur", "ko"], traite: ["Trait\xE9", "ok"] };
     var badge = (statut) => {
       const [l, c] = STATUTS[statut] || [statut || "\u2014", "mute"];
       return `<span class="ld-badge ${c}">${esc(l)}</span>`;
@@ -128,7 +128,15 @@ var require_schema = __commonJS({
         ["id_crm_liens", "String"],
         ["origines_portail", "String"],
         ["boite_ecouteur", "String"],
-        ["maj_le", "Date"]
+        ["maj_le", "Date"],
+        ["etapes", "String"],
+        ["notifier_relances", "String"],
+        ["marges_projet", "String"],
+        ["commentaire_max", "Integer"],
+        ["retention_jours", "Integer"],
+        ["action_lead", "String"],
+        ["catalogue_synchro_le", "Date"],
+        ["catalogue_etat", "String"]
       ] },
       agences: { name: "ld_agences", desc: "Agences", fields: [["nom", "String", { required: true }], ["crm_id", "String"], ["boites", "String"], ["negociateur_defaut", "String"], ["actif", "Bool"]] },
       personnes: { name: "ld_personnes", desc: "N\xE9gociateurs et assistant(e)s", fields: [
@@ -142,7 +150,8 @@ var require_schema = __commonJS({
         ["jours", "String"],
         ["remplacant_hors_jours", "String"],
         ["telephone", "String"],
-        ["actif", "Bool"]
+        ["actif", "Bool"],
+        ["alias", "String"]
       ] },
       regles: { name: "ld_regles_envoi", desc: "R\xE8gles d'envoi par n\xE9gociateur ou groupe", fields: [
         ["libelle", "String", { required: true }],
@@ -192,7 +201,70 @@ var require_schema = __commonJS({
         ["duree_ms", "Integer"],
         ["ancien_statut", "String"],
         ["ancien_bien", "String"],
-        ["ancien_destinataires", "String"]
+        ["ancien_destinataires", "String"],
+        ["dossier_id", "Integer"],
+        ["role", "String"]
+      ] },
+      dossiers: { name: "ld_dossiers", desc: "Dossiers (un prospect \xD7 un bien)", index: ["email", "relais", "tel9", "bien_crm"], fields: [
+        ["relais", "String"],
+        ["email", "String"],
+        ["telephone", "String"],
+        ["tel9", "String"],
+        ["reference", "String"],
+        ["bien_crm", "String"],
+        ["bien_ref", "String"],
+        ["contact_crm", "String"],
+        ["recherche_crm", "String"],
+        ["consentement", "Bool"],
+        ["negociateur", "String"],
+        ["agence", "String"],
+        ["portail", "String"],
+        ["nom", "String"],
+        ["statut", "String"],
+        ["premiere_demande", "Date"],
+        ["reponse_le", "Date"],
+        ["derniere_activite", "Date"],
+        ["nb_mails", "Integer"],
+        ["cree_le", "Date"],
+        ["maj_le", "Date"]
+      ] },
+      evenements: { name: "ld_evenements", desc: "Messages des dossiers (conversation)", index: ["dossier"], fields: [
+        ["dossier", "Integer", { required: true }],
+        ["mail_id", "Integer"],
+        ["type", "String"],
+        ["role", "String"],
+        ["auteur", "String"],
+        ["via", "String"],
+        ["quand", "Date"],
+        ["texte", "String"],
+        ["source", "String"],
+        ["empreinte", "String"]
+      ] },
+      biens: { name: "ld_biens", desc: "Catalogue local des biens du CRM (synchronis\xE9)", index: ["crm_id", "reference"], fields: [
+        ["crm_id", "String", { required: true }],
+        ["reference", "String"],
+        ["prix", "Float"],
+        ["surface", "Float"],
+        ["pieces", "Integer"],
+        ["chambres", "Integer"],
+        ["type", "String"],
+        ["ville", "String"],
+        ["code_postal", "String"],
+        ["negociateur", "String"],
+        ["agence", "String"],
+        ["proprietaire", "String"],
+        ["supprime", "Bool"],
+        ["synchro_le", "Date"]
+      ] },
+      portails: { name: "ld_portails", desc: "Portails d\xE9clar\xE9s par le client (sans code)", fields: [
+        ["nom", "String", { required: true }],
+        ["domaines", "String"],
+        ["objets_lead", "String"],
+        ["objets_non_lead", "String"],
+        ["libelles", "String"],
+        ["reference", "String"],
+        ["nature", "String"],
+        ["actif", "Bool"]
       ] },
       demandes: { name: "ld_demandes", desc: "Demandes d'\xE9volution et incidents", fields: [
         ["titre", "String", { required: true }],
@@ -228,6 +300,8 @@ var require_schema = __commonJS({
           await st.refresh_tables(true);
           t = Table.findOne({ name: d.name });
         }
+        const db = require("@saltcorn/data/db");
+        if (!db.isSQLite) for (const f of d.index || []) await db.query(`create index if not exists "${d.name}_${f}_idx" on "${db.getTenantSchema()}"."${d.name}" ("${f}")`);
         out[k] = t;
       }
       return out;
@@ -267,7 +341,10 @@ var require_conf = __commonJS({
       consentement_libelle: "Demande de contact via {portail} du {date}",
       utiliser_relais: true,
       id_crm_liens: "immo-facile-(\\d{8})\\b\n/fiches/[\\w-]*_(\\d{8})/",
-      prefixe_secrets: "LEADS_CRM"
+      prefixe_secrets: "LEADS_CRM",
+      notifier_relances: "negociateur",
+      commentaire_max: 6e3,
+      retention_jours: 0
     };
     var reglages = async () => {
       const t = await tables();
@@ -279,7 +356,8 @@ var require_conf = __commonJS({
     var charger = async () => {
       const t = await tables();
       const R2 = await reglages();
-      const [agences, personnes, regles, absences, origines, siege] = await Promise.all([t.agences.getRows({}), t.personnes.getRows({}), t.regles.getRows({}), t.absences.getRows({}), t.origines.getRows({}), t.siege.getRows({})]);
+      const [agences, personnes, regles, absences, origines, siege, portails] = await Promise.all([t.agences.getRows({}), t.personnes.getRows({}), t.regles.getRows({}), t.absences.getRows({}), t.origines.getRows({}), t.siege.getRows({}), t.portails.getRows({})]);
+      const lignes = (s) => String(s || "").split("\n").map((x) => x.trim()).filter(Boolean);
       const idMoteur = new Map(personnes.map((p) => [p.id, p.crm_id ? String(p.crm_id) : "p" + p.id]));
       const ref = (s) => {
         const v = String(s || "").trim();
@@ -295,6 +373,16 @@ var require_conf = __commonJS({
         id_crm_liens: String(R2.id_crm_liens || "").split("\n").map((x) => x.trim()).filter(Boolean),
         origines_portail: json(R2.origines_portail, {}),
         utiliser_relais: R2.utiliser_relais !== false,
+        /* étapes coupées par le client (tout est actif par défaut) */
+        etapes: json(R2.etapes, {}),
+        notifier_relances: R2.notifier_relances || "negociateur",
+        marges_projet: json(R2.marges_projet, {}),
+        commentaire: { max: +R2.commentaire_max || 6e3 },
+        action_lead: (() => {
+          const v = R2.action_lead || json(R2.crm_reglages, {}).action_lead;
+          return v ? isFinite(+v) ? +v : v : null;
+        })(),
+        portails: portails.filter((p) => p.actif !== false).map((p) => ({ id: "declare_" + p.id, nom: p.nom, domaines: liste(p.domaines), objets_lead: lignes(p.objets_lead), objets_non_lead: lignes(p.objets_non_lead), libelles: json(p.libelles, {}), reference: p.reference || null, nature: p.nature || "lead" })),
         agences: agences.filter((a) => a.actif !== false).map((a) => ({ id: String(a.crm_id || "a" + a.id), nom: a.nom, boites: liste(a.boites), negociateur_defaut: a.negociateur_defaut ? (ref(a.negociateur_defaut) || {}).personne || a.negociateur_defaut : null })),
         origines: origines.map((o) => ({ id: o.crm_id ? isFinite(+o.crm_id) ? +o.crm_id : o.crm_id : null, code: o.code, libelle: o.libelle })),
         consentement: { actif: !!R2.consentement_actif, libelle: R2.consentement_libelle },
@@ -303,6 +391,7 @@ var require_conf = __commonJS({
             id: idMoteur.get(p.id),
             ligne: p.id,
             nom: p.nom,
+            alias: String(p.alias || "").split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean),
             email: p.email,
             role: p.role || "negociateur",
             actif: p.actif !== false,
@@ -332,6 +421,206 @@ var require_conf = __commonJS({
   }
 });
 
+// ../src/fil.js
+var require_fil = __commonJS({
+  "../src/fil.js"(exports2, module2) {
+    "use strict";
+    var { tables } = require_schema();
+    var tel9 = (t) => String(t || "").replace(/\D/g, "").slice(-9);
+    var MAX_MESSAGES = 300;
+    var versMoteur = (row, evts) => ({
+      id: row.id,
+      relais: row.relais,
+      email: row.email,
+      telephone: row.telephone,
+      reference: row.reference,
+      bien_id: row.bien_crm || null,
+      bien_ref: row.bien_ref,
+      contact_id: row.contact_crm || null,
+      recherche_id: row.recherche_crm || null,
+      consentement: !!row.consentement,
+      negociateur: row.negociateur || null,
+      agence_id: row.agence || null,
+      portail: row.portail,
+      nom: row.nom,
+      statut: row.statut,
+      premiere_demande: row.premiere_demande,
+      reponse_le: row.reponse_le,
+      nb_mails: row.nb_mails || 0,
+      cree_le: row.cree_le,
+      maj_le: row.maj_le,
+      messages: evts.map((e) => ({ type: e.type, role: e.role, auteur: e.auteur, via: e.via, date: e.quand ? new Date(e.quand).toISOString() : null, texte: e.texte, source: e.source, empreinte: e.empreinte }))
+    });
+    var trouver = async (c = {}) => {
+      const t = await tables();
+      const ou = [];
+      if (c.relais) ou.push({ relais: String(c.relais).toLowerCase() });
+      if (c.email) ou.push({ email: String(c.email).toLowerCase() });
+      if (c.telephone && tel9(c.telephone).length === 9) ou.push({ tel9: tel9(c.telephone) });
+      if (!ou.length) return [];
+      const rows = await t.dossiers.getRows({ or: ou }, { orderBy: "maj_le", orderDesc: true, limit: 20 });
+      const out = [];
+      for (const r of rows) out.push(versMoteur(r, await t.evenements.getRows({ dossier: r.id }, { orderBy: "quand", limit: MAX_MESSAGES })));
+      return out;
+    };
+    var enregistrer = (api) => async (d, exec, quand = /* @__PURE__ */ new Date(), mailId = null) => {
+      if (!d || !d.dossier) return null;
+      const t = await tables();
+      const ancienRow = d.dossier.id ? await t.dossiers.getRow({ id: +d.dossier.id }) : null;
+      const ancien = ancienRow ? versMoteur(ancienRow, await t.evenements.getRows({ dossier: ancienRow.id }, { orderBy: "quand", limit: MAX_MESSAGES })) : null;
+      const n = api.leads.dossiers.miseAJour(ancien, d, exec || {}, quand);
+      const ligne = {
+        relais: n.relais ? String(n.relais).toLowerCase() : null,
+        email: n.email ? String(n.email).toLowerCase() : null,
+        telephone: n.telephone || null,
+        tel9: n.telephone ? tel9(n.telephone) : null,
+        reference: n.reference || null,
+        bien_crm: n.bien_id ? String(n.bien_id) : null,
+        bien_ref: n.bien_ref || null,
+        contact_crm: n.contact_id && !/^ombre-/.test(String(n.contact_id)) ? String(n.contact_id) : null,
+        recherche_crm: n.recherche_id ? String(n.recherche_id) : null,
+        consentement: !!n.consentement,
+        negociateur: n.negociateur ? String(n.negociateur) : null,
+        agence: n.agence_id ? String(n.agence_id) : null,
+        portail: n.portail || null,
+        nom: n.nom ? String(n.nom).slice(0, 200) : null,
+        statut: n.statut || "ouvert",
+        premiere_demande: n.premiere_demande || null,
+        reponse_le: n.reponse_le || null,
+        derniere_activite: quand,
+        nb_mails: n.nb_mails || 1,
+        maj_le: /* @__PURE__ */ new Date()
+      };
+      let id = ancienRow && ancienRow.id;
+      if (id) await t.dossiers.updateRow(ligne, id);
+      else id = await t.dossiers.insertRow({ ...ligne, cree_le: /* @__PURE__ */ new Date() });
+      const connues = new Set((ancien && ancien.messages || []).map((m) => m.empreinte));
+      for (const m of n.messages || []) {
+        if (!m.empreinte || connues.has(m.empreinte)) continue;
+        connues.add(m.empreinte);
+        await t.evenements.insertRow({ dossier: id, mail_id: m.source === "mail" ? mailId : null, type: m.type, role: m.role, auteur: String(m.auteur || "").slice(0, 200), via: m.via || null, quand: m.date || null, texte: String(m.texte || "").slice(0, 2e4), source: m.source, empreinte: m.empreinte });
+      }
+      return id;
+    };
+    module2.exports = { trouver, enregistrer, tel9, versMoteur };
+  }
+});
+
+// ../src/catalogue.js
+var require_catalogue = __commonJS({
+  "../src/catalogue.js"(exports2, module2) {
+    "use strict";
+    var { tables } = require_schema();
+    var { flowApi } = require_core();
+    var { charger } = require_conf();
+    var G = globalThis[Symbol.for("dysizz-leads.catalogue")] || (globalThis[Symbol.for("dysizz-leads.catalogue")] = { cache: /* @__PURE__ */ new Map() });
+    var tenant = () => {
+      try {
+        return require("@saltcorn/data/db").getTenantSchema();
+      } catch (e) {
+        return "public";
+      }
+    };
+    var oublier = () => G.cache.delete(tenant());
+    var versLigne = (b) => ({
+      crm_id: String(b.id),
+      reference: b.reference || null,
+      prix: +b.prix || null,
+      surface: +b.surface || null,
+      pieces: +b.pieces || null,
+      chambres: +b.chambres || null,
+      type: b.type || null,
+      ville: b.ville || null,
+      code_postal: b.code_postal || null,
+      negociateur: b.negociateur_id != null ? String(b.negociateur_id) : null,
+      agence: b.agence_id != null ? String(b.agence_id) : null,
+      proprietaire: b.proprietaire_id != null ? String(b.proprietaire_id) : null,
+      supprime: false,
+      synchro_le: /* @__PURE__ */ new Date()
+    });
+    var versBien = (r) => ({ id: isFinite(+r.crm_id) ? +r.crm_id : r.crm_id, reference: r.reference || "", prix: r.prix, surface: r.surface, pieces: r.pieces, chambres: r.chambres, type: r.type, ville: r.ville, code_postal: r.code_postal, negociateur_id: r.negociateur, agence_id: r.agence, proprietaire_id: r.proprietaire });
+    var enregistrerBiens = async (biens) => {
+      const t = await tables();
+      for (const b of biens) {
+        if (!b || b.id == null) continue;
+        const ex = await t.biens.getRow({ crm_id: String(b.id) });
+        if (ex) await t.biens.updateRow(versLigne(b), ex.id);
+        else await t.biens.insertRow(versLigne(b));
+      }
+      oublier();
+    };
+    var crmDuClient = async (modeForce) => {
+      const api = flowApi();
+      if (!api) throw new Error("dysizz-flow 2.4 ou plus r\xE9cent est n\xE9cessaire");
+      const { crm, conf } = await charger();
+      return { api, conf, crm, client: api.crmDepuisCoffre(crm.type, crm.reglages, crm.prefixe, modeForce || "ombre") };
+    };
+    var synchroniser = async ({ complet = false } = {}) => {
+      const { api, client } = await crmDuClient("ombre");
+      if (!client.catalogue) return { ok: false, message: "ce CRM ne sait pas donner son catalogue" };
+      return api.verrou.sous("catalogue", async () => {
+        const t = await tables();
+        const R2 = (await t.reglages.getRows({}, { orderBy: "id", limit: 1 }))[0];
+        const depuis = !complet && R2 && R2.catalogue_synchro_le ? new Date(new Date(R2.catalogue_synchro_le).getTime() - 10 * 6e4) : null;
+        const debut = /* @__PURE__ */ new Date();
+        let n = 0;
+        const vus = /* @__PURE__ */ new Set();
+        for await (const lot of client.catalogue({ depuis })) {
+          await enregistrerBiens(lot);
+          n += lot.length;
+          lot.forEach((b) => vus.add(String(b.id)));
+        }
+        if (!depuis) {
+          const tous = await t.biens.getRows({ supprime: false });
+          for (const r of tous) if (!vus.has(String(r.crm_id))) await t.biens.updateRow({ supprime: true }, r.id);
+        }
+        const etat = `${depuis ? "delta" : "complet"} : ${n} bien(s) le ${debut.toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}`;
+        if (R2) await t.reglages.updateRow({ catalogue_synchro_le: debut, catalogue_etat: etat }, R2.id);
+        oublier();
+        return { ok: true, n, complet: !depuis, message: etat };
+      }, { attente_ms: 1e3 });
+    };
+    var evenementBien = async (type, id) => {
+      const t = await tables();
+      if (/DELETE/i.test(type)) {
+        const ex = await t.biens.getRow({ crm_id: String(id) });
+        if (ex) await t.biens.updateRow({ supprime: true, synchro_le: /* @__PURE__ */ new Date() }, ex.id);
+        oublier();
+        return "supprim\xE9";
+      }
+      const { client } = await crmDuClient("ombre");
+      const b = await client.bienParId(id);
+      if (b) await enregistrerBiens([b]);
+      return b ? "\xE0 jour" : "introuvable";
+    };
+    var biensLocaux = async () => {
+      const k = tenant(), c = G.cache.get(k);
+      if (c && Date.now() - c.t < 6e4) return c.biens;
+      const t = await tables();
+      const biens = (await t.biens.getRows({ supprime: false })).map(versBien);
+      G.cache.set(k, { t: Date.now(), biens });
+      return biens;
+    };
+    var avecCatalogue = async (crm) => {
+      const biens = await biensLocaux().catch(() => []);
+      if (!biens.length) return crm;
+      const api = flowApi();
+      const local = api.leads.ADAPTATEURS.memoire.creer({ biens });
+      return {
+        ...crm,
+        catalogue_local: biens.length,
+        bienParId: async (id) => await local.bienParId(id) || crm.bienParId(id).catch(() => null),
+        biensParReference: async (ref) => {
+          const l = await local.biensParReference(ref);
+          return l.length ? l : crm.biensParReference(ref).catch(() => []);
+        },
+        biensParCriteres: (q, o) => local.biensParCriteres(q, o)
+      };
+    };
+    module2.exports = { synchroniser, evenementBien, avecCatalogue, biensLocaux, enregistrerBiens, oublier };
+  }
+});
+
 // ../src/dossier.js
 var require_dossier = __commonJS({
   "../src/dossier.js"(exports2, module2) {
@@ -339,9 +628,13 @@ var require_dossier = __commonJS({
     var { tables, MAILS } = require_schema();
     var { charger } = require_conf();
     var { flowApi } = require_core();
+    var fil = require_fil();
+    var { avecCatalogue } = require_catalogue();
     var courte = (v, n = 900) => String(v == null ? "" : v).slice(0, n);
+    var sansCommentaire = (a) => a && a.donnees && a.donnees.comment ? { ...a, donnees: { ...a.donnees, comment: `(${a.donnees.comment.length} caract\xE8res)` } } : a;
     var versLigne = (d, mail = {}) => {
       const x = d.extraction || {}, c = x.contact || {}, b = d.bien || null;
+      const ex = d.execution || {};
       return {
         mail_id: mail.id || null,
         message_id: courte(mail.message_id, 300),
@@ -352,11 +645,11 @@ var require_dossier = __commonJS({
         portail: x.portail || "",
         nature: x.nature || "",
         statut: d.statut,
-        decision: "",
+        role: d.role || "",
         contact_nom: courte([c.prenom, c.nom].filter(Boolean).join(" ") || c.nom_complet, 200),
         contact_email: c.email || c.email_relais || "",
         contact_tel: c.telephone || "",
-        contact_crm: d.contact && d.contact.id ? String(d.contact.id) : "",
+        contact_crm: ex.contactId && !/^ombre-/.test(String(ex.contactId)) ? String(ex.contactId) : d.contact && d.contact.id ? String(d.contact.id) : "",
         contact_action: d.contact && d.contact.action || "",
         reference: x.bien && (x.bien.reference || x.bien.id_crm || x.bien.reference_portail) || "",
         bien_crm: b ? String(b.id) : "",
@@ -370,15 +663,15 @@ var require_dossier = __commonJS({
         destinataires: d.destinataires ? d.destinataires.liste.map((l) => l.email).sort().join(", ") : "",
         motifs: (d.motifs || []).join(" \xB7 "),
         alertes: (d.alertes || []).join(" \xB7 "),
-        mode: d.execution && d.execution.resultats && d.execution.resultats[0] && d.execution.resultats[0].mode || (d.execution && d.execution.resultats && d.execution.resultats.some((r) => r.fait) ? "reel" : "ombre"),
+        mode: ex.mode || "ombre",
         actions: (d.actions || []).map((a) => a.op).join(", "),
-        dossier: JSON.stringify({ ...d, actions: (d.actions || []).map((a) => ({ ...a, preuves: a.preuves && a.preuves.map((p) => p.nom) })) }).slice(0, 2e5),
+        dossier: JSON.stringify({ ...d, fil: d.fil ? { ...d.fil, messages_dossier: void 0, nb_messages_dossier: (d.fil.messages_dossier || []).length } : void 0, actions: (d.actions || []).map((a) => sansCommentaire({ ...a, preuves: a.preuves && a.preuves.map((p) => p.nom) })) }).slice(0, 2e5),
         duree_ms: d.duree_ms || 0
       };
     };
-    var enregistrer = async (d, mail) => {
+    var enregistrer = async (d, mail, dossierId = null) => {
       const t = await tables();
-      const ligne = versLigne(d, mail);
+      const ligne = { ...versLigne(d, mail), dossier_id: dossierId };
       const ex = mail && mail.id ? await t.leads.getRow({ mail_id: mail.id }) : null;
       if (ex) {
         await t.leads.updateRow({ ...ligne, decision: ex.decision || "", ancien_statut: ex.ancien_statut, ancien_bien: ex.ancien_bien, ancien_destinataires: ex.ancien_destinataires }, ex.id);
@@ -386,7 +679,19 @@ var require_dossier = __commonJS({
       }
       return t.leads.insertRow(ligne);
     };
-    var retraiter = async (mailId, { forcerOmbre = false } = {}) => {
+    var versMoteur = (mail) => ({ expediteur: mail.expediteur, destinataire: mail.destinataire, objet: mail.objet, texte: mail.corps_texte, html: mail.corps_html, date: mail.date_envoi, message_id: mail.message_id, in_reply_to: mail.in_reply_to, references: mail.references_fil, source_eml: mail.source_eml || null });
+    var cleVerrou = (api, m, conf, mailId) => {
+      try {
+        const r = api.leads.extraire(m, conf);
+        const texte = api.leads.texte.texteMail({ texte: m.texte, html: m.html });
+        const k = api.leads.conversation.cles(r, texte, conf);
+        const v = k.relais || k.email || k.telephone && String(k.telephone).replace(/\D/g, "").slice(-9);
+        return v ? "dossier:" + String(v).toLowerCase() : "mail:" + mailId;
+      } catch (e) {
+        return "mail:" + mailId;
+      }
+    };
+    var traiterMail = async (mailId, { forcerOmbre = false } = {}) => {
       const api = flowApi();
       if (!api) throw new Error("dysizz-flow 2.4 ou plus r\xE9cent est n\xE9cessaire");
       const Table = require("@saltcorn/data/models/table");
@@ -395,15 +700,20 @@ var require_dossier = __commonJS({
       if (!mail) throw new Error("mail introuvable");
       const { conf, crm } = await charger();
       const mode = forcerOmbre ? "ombre" : crm.mode;
-      const client = api.crmDepuisCoffre(crm.type, crm.reglages, crm.prefixe, mode);
-      const L2 = api.leads;
-      const d = await L2.traiter({ expediteur: mail.expediteur, destinataire: mail.destinataire, objet: mail.objet, texte: mail.corps_texte, html: mail.corps_html, date: mail.date_envoi }, client, conf);
-      d.execution = await L2.executer(d, client, { mode });
-      if (client.notees) d.execution.ecritures_notees = client.notees;
-      const id = await enregistrer(d, mail);
-      return { id, dossier: d };
+      const client = await avecCatalogue(api.crmDepuisCoffre(crm.type, crm.reglages, crm.prefixe, mode));
+      const m = versMoteur(mail);
+      return api.verrou.sous(cleVerrou(api, m, conf, mail.id), async () => {
+        const d = await api.leads.traiter(m, client, conf, { dossiers: { trouver: fil.trouver } });
+        d.execution = { ...await api.leads.executer(d, client, { mode }), mode };
+        if (client.notees) d.execution.ecritures_notees = client.notees.map(sansCommentaire);
+        const garder = d.dossier && !(d.statut === "a_trier" && !d.dossier.existant);
+        const dossierId = garder ? await fil.enregistrer(api)(d, d.execution, new Date(mail.date_envoi || Date.now()), mail.id) : null;
+        const id = await enregistrer(d, mail, dossierId);
+        return { id, dossier_id: dossierId, statut: d.statut, dossier: d };
+      });
     };
-    module2.exports = { enregistrer, retraiter, versLigne };
+    var retraiter = (mailId, o) => traiterMail(mailId, o);
+    module2.exports = { enregistrer, retraiter, traiterMail, versLigne, versMoteur };
   }
 });
 
@@ -418,18 +728,21 @@ var require_installer = __commonJS({
       name: "ld_traitement",
       when: "DzfMailRecu",
       channel: ECOUTEUR,
-      description: "dysizz-leads : chaque mail re\xE7u par l'\xE9couteur \xAB leads \xBB est lu, rapproch\xE9, rout\xE9 et rang\xE9 dans ld_leads. Mode ombre par d\xE9faut. Aucun mail n'est envoy\xE9.",
+      version: 2,
+      description: "dysizz-leads v2 : chaque mail re\xE7u par l'\xE9couteur \xAB leads \xBB est trait\xE9 une seule fois (dossier prospect \xD7 bien, catalogue local, CRM selon le mode). Mode ombre par d\xE9faut. Aucun mail n'est envoy\xE9.",
       steps: [
-        { name: "conf", action_name: "dzx_leads_conf", configuration: {} },
-        { name: "mail", action_name: "dzf_table_obtenir", configuration: { table: MAILS, id: "{{id}}", sortie: "mail" } },
-        { name: "une_fois", action_name: "dzf_idempotence", configuration: { cle: "ld-{{mail.id}}", duree_h: 720 } },
-        { name: "traiter", action_name: "dzf_lead_traiter", configuration: { mail: "{{mail}}", configuration: "{{leads_conf}}", crm: "{{leads_crm.type}}", crm_reglages: "{{leads_crm.reglages}}", prefixe_secrets: "{{leads_crm.prefixe}}", mode: "{{leads_crm.mode}}" } },
-        { name: "enregistrer", action_name: "dzx_leads_enregistrer", configuration: { dossier: "{{dossier}}", mail: "{{mail}}" } }
+        { name: "une_fois", action_name: "dzf_idempotence", configuration: { cle: "ld-{{id}}", duree_h: 720 } },
+        { name: "traiter", action_name: "dzx_leads_traiter", configuration: { id: "{{id}}" } }
       ]
+    };
+    var aJour = async () => {
+      const Trigger = require("@saltcorn/data/models/trigger");
+      const t = Trigger.findOne({ name: WF.name });
+      return !!(t && String(t.description || "").startsWith("dysizz-leads v" + WF.version));
     };
     var manque = () => {
       const st = require("@saltcorn/data/db/state").getState();
-      const need = ["dzf_lead_traiter", "dzf_table_obtenir", "dzf_idempotence", "dzx_leads_conf"];
+      const need = ["dzf_idempotence", "dzx_leads_traiter"];
       return need.filter((a) => !st.actions || !st.actions[a]);
     };
     var installer = async ({ reecrire = false } = {}) => {
@@ -449,13 +762,13 @@ var require_installer = __commonJS({
         t = await Trigger.create(def);
         t = Trigger.findOne({ name: WF.name }) || t;
         log.push("workflow ld_traitement cr\xE9\xE9");
-      } else if (reecrire) {
+      } else if (reecrire || !await aJour()) {
         await Trigger.update(t.id, def);
         log.push("workflow ld_traitement r\xE9\xE9crit");
       } else {
         log.push("workflow ld_traitement d\xE9j\xE0 l\xE0 (gard\xE9 tel quel)");
       }
-      if (reecrire || !(await WS.find({ trigger_id: t.id })).length) {
+      if (reecrire || !(await WS.find({ trigger_id: t.id })).length || !(await WS.find({ trigger_id: t.id, action_name: "dzx_leads_traiter" })).length) {
         await db.deleteWhere("_sc_workflow_steps", { trigger_id: t.id });
         WF.steps.forEach((s, i) => {
           s.next_step = WF.steps[i + 1] ? WF.steps[i + 1].name : "";
@@ -488,7 +801,95 @@ var require_installer = __commonJS({
       const E2 = Table.findOne({ name: "dzf_ecouteurs" });
       return E2 ? E2.getRow({ nom: ECOUTEUR }) : null;
     };
-    module2.exports = { installer, regler_ecouteur, etat_ecouteur, ECOUTEUR, WF, manque };
+    module2.exports = { installer, regler_ecouteur, etat_ecouteur, ECOUTEUR, WF, manque, aJour };
+  }
+});
+
+// ../src/pages/dossiers.js
+var require_dossiers = __commonJS({
+  "../src/pages/dossiers.js"(exports2, module2) {
+    "use strict";
+    var { esc, peutVoir: peutVoir2, go, dateFr, flowApi } = require_core();
+    var { tables } = require_schema();
+    var { charger } = require_conf();
+    var U = require_ui();
+    var refuse = (res) => res.status(403).send("Acc\xE8s r\xE9serv\xE9 \xE0 l'\xE9quipe");
+    var db = () => require("@saltcorn/data/db");
+    var S = () => db().getTenantSchema();
+    var duree = (ms) => {
+      if (ms == null || isNaN(ms)) return "\u2014";
+      const h = ms / 36e5;
+      return h < 1 ? Math.round(h * 60) + " min" : h < 48 ? Math.round(h) + " h" : Math.round(h / 24) + " j";
+    };
+    var liste = async (req, res) => {
+      if (!peutVoir2(req)) return refuse(res);
+      await tables();
+      const q = req.query || {};
+      const w = [], p = [];
+      const add = (sql, v) => {
+        p.push(v);
+        w.push(sql.replace("?", "$" + p.length));
+      };
+      if (q.sans_reponse === "1") w.push("reponse_le is null");
+      if (q.negociateur) add("negociateur = ?", q.negociateur);
+      if (q.q) {
+        p.push("%" + q.q + "%");
+        const n = "$" + p.length;
+        w.push(`(nom ilike ${n} or email ilike ${n} or bien_ref ilike ${n} or reference ilike ${n})`);
+      }
+      const where = w.length ? "where " + w.join(" and ") : "";
+      const page = Math.max(1, +q.page || 1);
+      const total = +(await db().query(`select count(*) n from "${S()}".ld_dossiers ${where}`, p)).rows[0].n;
+      const rows = (await db().query(`select * from "${S()}".ld_dossiers ${where} order by derniere_activite desc nulls last limit 50 offset ${(page - 1) * 50}`, p)).rows;
+      const { conf } = await charger().catch(() => ({ conf: { routage: { personnes: [] } } }));
+      const nom = new Map((conf.routage && conf.routage.personnes || []).map((x) => [String(x.id), x.nom]));
+      const qs = (o) => "?" + new URLSearchParams({ ...q, ...o }).toString();
+      const html = `<form class="ld-filtres" method="get"><input class="form-control form-control-sm" name="q" value="${esc(q.q || "")}" placeholder="Nom, e-mail, r\xE9f\xE9rence\u2026">
+${U.coche("sans_reponse", q.sans_reponse === "1", "sans r\xE9ponse de l'\xE9quipe").replace('name="sans_reponse"', 'name="sans_reponse" value="1"')}<button class="btn btn-sm btn-primary">Filtrer</button> <span class="ld-mute">${total} dossier(s)</span></form>
+${U.table(["Derni\xE8re activit\xE9", "Prospect", "Bien", "N\xE9gociateur", "Mails", "R\xE9ponse de l'\xE9quipe"], rows.map((r) => [
+        `<a href="/leads/dossier/${r.id}">${esc(dateFr(r.derniere_activite))}</a>`,
+        `${esc(r.nom || "")}<br><small class="ld-mute">${esc(r.email || r.relais || r.telephone || "")}</small>`,
+        `${esc(r.bien_ref || r.reference || "\u2014")}<br><small class="ld-mute">${esc(r.portail || "")}</small>`,
+        esc(nom.get(String(r.negociateur)) || r.negociateur || "\u2014"),
+        esc(r.nb_mails || 1),
+        r.reponse_le ? `${U.pill("r\xE9pondu", "ok")} <small class="ld-mute">en ${esc(duree(new Date(r.reponse_le) - new Date(r.premiere_demande)))}</small>` : U.pill("pas encore", Date.now() - new Date(r.premiere_demande) > 864e5 ? "ko" : "warn")
+      ]), "Aucun dossier.")}
+<div class="ld-pages">${page > 1 ? `<a class="btn btn-sm btn-outline-secondary" href="${qs({ page: page - 1 })}">Pr\xE9c\xE9dents</a>` : ""}${page * 50 < total ? `<a class="btn btn-sm btn-outline-secondary" href="${qs({ page: page + 1 })}">Suivants</a>` : ""}</div>`;
+      U.page(req, res, "Dossiers", "dossiers", html);
+    };
+    var fiche = async (req, res) => {
+      if (!peutVoir2(req)) return refuse(res);
+      const t = await tables();
+      const d = await t.dossiers.getRow({ id: +req.params.id });
+      if (!d) return go(res, "/leads/dossiers", "Dossier introuvable", true);
+      const evts = await t.evenements.getRows({ dossier: d.id }, { orderBy: "quand" });
+      const leads = await t.leads.getRows({ dossier_id: d.id }, { orderBy: "recu_le" });
+      const api = flowApi();
+      const msgs = evts.map((e) => ({ type: e.type, role: e.role, auteur: e.auteur, via: e.via, date: e.quand, texte: e.texte }));
+      const comment = api ? api.leads.conversation.commentaire(msgs, { max: 6e3 }) : "";
+      const fil = evts.map((e) => `<div style="margin:0 0 12px;padding:8px 10px;border-left:3px solid ${e.role === "equipe" ? "var(--ld-ok)" : "var(--ld-a)"};background:var(--ld-f);border-radius:4px">
+<div class="ld-mute" style="font-size:12px">${esc(dateFr(e.quand) || "date inconnue")} \xB7 <b>${esc(e.auteur || "")}</b> ${e.role === "equipe" ? U.pill("agence", "ok") : e.via ? U.pill("via " + e.via, "info") : ""} ${U.pill(e.type, "mute")}${e.source === "citation" ? ' <span class="ld-mute">(recopi\xE9 dans un mail suivant)</span>' : ""}</div>
+<div style="white-space:pre-wrap;margin-top:4px">${esc(e.texte)}</div></div>`).join("");
+      const html = `<div class="ld-grille ld-g2">
+${U.carte("Conversation", fil || '<p class="ld-vide">Aucun message.</p>')}
+<div>
+${U.carte("Dossier", `<dl class="ld-kv"><dt>Prospect</dt><dd>${esc(d.nom || "\u2014")}</dd><dt>E-mail</dt><dd>${esc(d.email || "\u2014")}</dd><dt>Relais du portail</dt><dd>${esc(d.relais || "\u2014")}</dd><dt>T\xE9l\xE9phone</dt><dd>${esc(d.telephone || "\u2014")}</dd>
+<dt>Bien</dt><dd>${esc(d.bien_ref || d.reference || "\u2014")} ${d.bien_crm ? `<span class="ld-mute">(id ${esc(d.bien_crm)})</span>` : ""}</dd><dt>N\xE9gociateur</dt><dd>${esc(d.negociateur || "\u2014")}</dd>
+<dt>Contact CRM</dt><dd>${esc(d.contact_crm || "\u2014 (mode ombre)")}</dd><dt>Projet de recherche</dt><dd>${esc(d.recherche_crm || "\u2014")}</dd><dt>Consentement</dt><dd>${d.consentement ? U.pill("pos\xE9", "ok") : U.pill("non", "mute")}</dd>
+<dt>1re demande</dt><dd>${esc(dateFr(d.premiere_demande))}</dd><dt>1re r\xE9ponse de l'\xE9quipe</dt><dd>${d.reponse_le ? esc(dateFr(d.reponse_le)) + " \xB7 " + esc(duree(new Date(d.reponse_le) - new Date(d.premiere_demande))) : U.pill("pas encore", "warn")}</dd></dl>`)}
+${U.carte("Mails du dossier", U.table(["Re\xE7u", "Nature", "Statut"], leads.map((l) => [`<a href="/leads/l/${l.id}">${esc(dateFr(l.recu_le))}</a>`, esc(l.nature), U.badge(l.decision || l.statut)])))}
+${U.carte("Commentaire \xE9crit dans le CRM (projet de recherche)", `<pre class="ld-pre">${esc(comment)}</pre><p class="ld-mute" style="margin:6px 0 0">Reconstruit \xE0 chaque mail \xE0 partir de toute la conversation ; rien n'est ajout\xE9 en double.</p>`)}
+</div></div>`;
+      U.page(req, res, "Dossier \xB7 " + (d.nom || d.email || d.id), "dossiers", html);
+    };
+    var chiffres = async () => {
+      const r = (await db().query(`select count(*) filter (where cree_le > now() - interval '7 days') nouveaux,
+    count(*) filter (where reponse_le is null and premiere_demande < now() - interval '24 hours' and premiere_demande > now() - interval '30 days') sans_reponse,
+    percentile_cont(0.5) within group (order by extract(epoch from (reponse_le - premiere_demande))) filter (where reponse_le is not null and premiere_demande > now() - interval '30 days') mediane_s
+    from "${S()}".ld_dossiers`)).rows[0] || {};
+      return { nouveaux: +r.nouveaux || 0, sans_reponse: +r.sans_reponse || 0, mediane_ms: r.mediane_s != null ? +r.mediane_s * 1e3 : null };
+    };
+    module2.exports = { liste, fiche, chiffres, duree };
   }
 });
 
@@ -533,6 +934,7 @@ var require_leads = __commonJS({
       const t = await tables();
       const dem = await t.demandes.getRows({}, { orderBy: "cree_le", orderDesc: true, limit: 50 });
       const ouvertes = dem.filter((d) => !["Termin\xE9e", "Mise en ligne"].includes(d.statut));
+      const DC = await require_dossiers().chiffres().catch(() => ({ nouveaux: 0, sans_reponse: 0, mediane_ms: null }));
       let absents = [];
       try {
         const { conf } = await charger();
@@ -541,6 +943,7 @@ var require_leads = __commonJS({
       }
       const html = `<div class="ld-kpis">
 ${U.kpi(p1, "pr\xEAts aujourd'hui", { ton: "ok", lien: "/leads/liste?statut=pret&periode=1" })}${U.kpi(v1, "\xE0 v\xE9rifier aujourd'hui", { ton: v1 ? "warn" : "", lien: "/leads/liste?statut=a_verifier&periode=1" })}${U.kpi(t1, "\xE0 trier aujourd'hui", { ton: "info", lien: "/leads/liste?statut=a_trier&periode=1" })}${U.kpi(i1, "non-leads \xE9cart\xE9s", { lien: "/leads/liste?statut=ignore&periode=1" })}
+${U.kpi(DC.nouveaux, "dossiers ouverts sur 7 jours", { lien: "/leads/dossiers" })}${U.kpi(require_dossiers().duree(DC.mediane_ms), "d\xE9lai de 1re r\xE9ponse (m\xE9diane, 30 j)", { ton: DC.mediane_ms != null && DC.mediane_ms > 864e5 ? "warn" : "ok" })}${U.kpi(DC.sans_reponse, "sans r\xE9ponse depuis plus de 24 h", { ton: DC.sans_reponse ? "ko" : "", lien: "/leads/dossiers?sans_reponse=1" })}
 ${U.kpi(p7, "pr\xEAts sur 7 jours", { lien: "/leads/liste?statut=pret&periode=7" })}${U.kpi(v7, "\xE0 v\xE9rifier sur 7 jours", { ton: v7 ? "warn" : "", lien: "/leads/liste?statut=a_verifier&periode=7" })}${U.kpi(t7, "\xE0 trier sur 7 jours", { lien: "/leads/liste?statut=a_trier&periode=7" })}${U.kpi(moy + " ms", "temps moyen de traitement")}</div>
 <div class="ld-grille ld-g2">
 ${U.carte("Par portail \xB7 7 jours", U.table(["Portail", "Leads", "Pr\xEAts", "\xC0 v\xE9rifier", "Taux"], parPortail.map((r) => [`<a href="/leads/liste?portail=${encodeURIComponent(r.p)}&periode=7">${esc(r.p)}</a>`, r.n, r.ok, r.v ? `<span class="ld-badge warn">${r.v}</span>` : 0, Math.round(100 * r.ok / Math.max(1, r.n)) + " %"])))}
@@ -621,6 +1024,7 @@ ${U.table(["Re\xE7u", "Portail", "Contact", "R\xE9f\xE9rence \u2192 bien", "Agen
       const D2 = d.destinataires || { liste: [], trace: [] };
       const ex = d.execution && d.execution.resultats || [];
       const html = `<div class="ld-actions" style="margin:-4px 0 12px">${U.badge(l.decision || l.statut)} ${U.pill(l.portail || "portail inconnu")} ${U.pill(l.nature)} ${l.mode === "reel" ? '<span class="ld-reel">R\xC9EL</span>' : '<span class="ld-ombre">OMBRE</span>'}
+${l.dossier_id ? `<a class="btn btn-sm btn-outline-secondary" href="/leads/dossier/${l.dossier_id}"><i class="fas fa-comments"></i> Dossier et conversation</a>` : ""}
 <form method="post" action="/leads/l/${l.id}/retraiter" class="ld-inline">${hidden(req)}<button class="btn btn-sm btn-outline-primary"><i class="fas fa-redo"></i> Retraiter (ombre)</button></form>
 <form method="post" action="/leads/l/${l.id}/decision" class="ld-inline">${hidden(req)}${U.select("decision", [["", "D\xE9cision\u2026"], ["traite", "Trait\xE9 \xE0 la main"], ["ignore", "Pas un lead"], ["a_verifier", "\xC0 revoir"]], "")}<button class="btn btn-sm btn-outline-secondary">Enregistrer</button></form></div>
 ${l.motifs ? `<div class="ld-flash ko">${esc(l.motifs)}</div>` : ""}${l.alertes ? `<div class="ld-flash" style="background:rgba(161,92,0,.1)">${esc(l.alertes)}</div>` : ""}
@@ -1143,7 +1547,7 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
     var rejouer = async (req, res) => {
       if (!isAdmin(req)) return refuse(res);
       const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
-      const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.id limit 50`)).rows.map((r) => r.id);
+      const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.date_envoi, m.id limit 50`)).rows.map((r) => r.id);
       let ok = 0, ko = 0;
       for (const id of ids) {
         try {
@@ -1159,12 +1563,169 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
   }
 });
 
+// ../src/pages/chaine.js
+var require_chaine = __commonJS({
+  "../src/pages/chaine.js"(exports2, module2) {
+    "use strict";
+    var { esc, isAdmin, hidden, go, dateFr, flowApi } = require_core();
+    var { tables } = require_schema();
+    var { reglages: lireReglages, json, liste } = require_conf();
+    var { synchroniser, evenementBien } = require_catalogue();
+    var U = require_ui();
+    var refuse = (res) => res.status(403).send("R\xE9serv\xE9 aux administrateurs");
+    var db = () => require("@saltcorn/data/db");
+    var ETAPES = [
+      ["bien", "Rapprocher le bien", "sans cette \xE9tape, pas de n\xE9gociateur tir\xE9 du bien"],
+      ["contact", "Retrouver ou cr\xE9er le contact", ""],
+      ["suivi", "Lier le contact au bien (suivi)", ""],
+      ["projet", "Projet de recherche (crit\xE8res du bien demand\xE9)", ""],
+      ["commentaire", "Commentaire = conversation enti\xE8re", "reconstruit \xE0 chaque mail"],
+      ["consentement", "Consentement anti-d\xE9marchage", "un par contact, preuve .eml jointe"],
+      ["action", "Action \xAB message re\xE7u \xBB dans l'historique", "si un type d'action est r\xE9gl\xE9"],
+      ["notification", "Calculer les destinataires", "l'envoi reste \xE0 part (r\xE9glage \xAB Envoyer les mails \xBB)"]
+    ];
+    var page = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const t = await tables();
+      const R2 = await lireReglages();
+      const E2 = json(R2.etapes, {});
+      const M = { prix: 0.1, surface: 0.2, pieces: 1, ...json(R2.marges_projet, {}) };
+      const portails = await t.portails.getRows({}, { orderBy: "nom" });
+      const S = db().getTenantSchema();
+      const nouveaux = (await db().query(`select lower(substring(expediteur from '@([A-Za-z0-9.-]+)')) d, count(*) n, max(objet) o, max(id) id from "${S}".ld_leads
+    where (portail = 'inconnu' or statut = 'a_trier') and traite_le > now() - interval '30 days' group by 1 order by 2 desc limit 15`).catch(() => ({ rows: [] }))).rows;
+      const nbBiens = +(await db().query(`select count(*) n from "${S}".ld_biens where supprime is not true`).catch(() => ({ rows: [{ n: 0 }] }))).rows[0].n;
+      const url = `${req.protocol}://${req.get("host")}/leads/crochet/crm`;
+      const pre = R2.prefixe_secrets || "LEADS_CRM";
+      const api = flowApi();
+      const aSecret = api ? await api.hasSecret(pre + "_WEBHOOK") : false;
+      const html = `<form method="post" action="/leads/chaine">${hidden(req)}
+${U.carte("\xC9tapes de la cha\xEEne", `<p class="ld-mute" style="margin:0 0 8px">Tout est actif par d\xE9faut. Un client qui ne veut qu'une partie coupe le reste ; la lecture des mails et le tableau de bord restent toujours l\xE0.</p>
+<div class="ld-form">${ETAPES.map(([k, l, a]) => U.champ("", U.coche("e_" + k, E2[k] !== false, esc(l)) + (a ? `<small class="ld-mute">${esc(a)}</small>` : ""))).join("")}</div>`)}
+${U.carte("Relances et commentaire", `<div class="ld-form">
+${U.champ("Relance d'un dossier d\xE9j\xE0 suivi", U.select("notifier_relances", [["negociateur", "au n\xE9gociateur et \xE0 son assistant(e) seulement"], ["tous", "\xE0 tous les destinataires (comme un nouveau lead)"], ["non", "\xE0 personne (seulement dans le CRM)"]], R2.notifier_relances || "negociateur"))}
+${U.champ("Taille maximale du commentaire", U.input("commentaire_max", R2.commentaire_max || 6e3, { type: "number" }), "au-del\xE0 : la 1re demande et les messages les plus r\xE9cents")}
+${U.champ("Projet de recherche \xB7 prix max", U.input("m_prix", Math.round(M.prix * 100), { type: "number" }), "en % au-dessus du prix du bien")}
+${U.champ("Projet de recherche \xB7 surface min", U.input("m_surface", Math.round(M.surface * 100), { type: "number" }), "en % en dessous de la surface du bien")}
+${U.champ("Projet de recherche \xB7 pi\xE8ces min", U.input("m_pieces", M.pieces, { type: "number" }), "pi\xE8ces en moins")}
+${U.champ("Conserver le texte des mails", U.input("retention_jours", R2.retention_jours || 0, { type: "number" }), "en jours ; 0 = toujours. Au-del\xE0, le corps est effac\xE9 (l'empreinte et la preuve restent dans le CRM).")}
+</div>`)}
+<div class="ld-actions"><button class="btn btn-primary">Enregistrer</button></div></form>
+
+${U.carte("Catalogue local des biens", `<p style="margin:0 0 8px">${nbBiens} bien(s) \xB7 ${esc(R2.catalogue_etat || "jamais synchronis\xE9")}</p>
+<p class="ld-mute" style="margin:0 0 8px">Le rapprochement se fait sur ce catalogue (rapide, sans appel au CRM). Mise \xE0 jour : une fois par heure (biens modifi\xE9s), et en temps r\xE9el par webhook si le CRM le permet.</p>
+<div class="ld-actions"><form method="post" action="/leads/catalogue">${hidden(req)}<button class="btn btn-sm btn-outline-primary">Mettre \xE0 jour maintenant</button></form>
+<form method="post" action="/leads/catalogue">${hidden(req)}<input type="hidden" name="complet" value="1"><button class="btn btn-sm btn-outline-secondary">Tout recharger</button></form></div>
+<p style="margin:12px 0 4px"><b>Webhook Immofacile</b> ${aSecret ? U.pill("cl\xE9 rang\xE9e", "ok") : U.pill("cl\xE9 absente", "warn")}</p>
+<p class="ld-mute ld-mono" style="margin:0">POST /hooks { "url": "${esc(url)}", "origines": ["PRODUCT_CREATE","PRODUCT_UPDATE","PRODUCT_DELETE"], "headers": { "X-Api-Key": "&lt;la cl\xE9&gt;" } }</p>
+<form method="post" action="/leads/chaine/webhook" class="ld-inline" style="margin-top:8px">${hidden(req)}${U.input("cle", "", { type: "password", placeholder: "cl\xE9 du webhook (rang\xE9e chiffr\xE9e)" })}<button class="btn btn-sm btn-outline-secondary">Ranger la cl\xE9</button></form>`)}
+
+${U.carte("Portails d\xE9clar\xE9s (sans code)", `${U.table(["Nom", "Domaines", "Objets qui sont des leads", "R\xE9f\xE9rence", ""], portails.map((p) => [
+        esc(p.nom),
+        `<span class="ld-mono">${esc(p.domaines)}</span>`,
+        `<span class="ld-mono">${esc(String(p.objets_lead || "").split("\n").join(" \xB7 "))}</span>`,
+        `<span class="ld-mono">${esc(p.reference || "")}</span>`,
+        `<form method="post" action="/leads/portails/${p.id}/supprimer" class="ld-inline">${hidden(req)}<button class="btn btn-sm btn-link">retirer</button></form>`
+      ]), "Aucun portail d\xE9clar\xE9 : ceux du code suffisent pour l'instant.")}
+<form method="post" action="/leads/portails" style="margin-top:10px">${hidden(req)}<div class="ld-form">
+${U.champ("Nom", U.input("nom", req.query.domaine || "", { required: true }))}
+${U.champ("Domaines de l'exp\xE9diteur", U.input("domaines", req.query.domaine || "", { placeholder: "exemple-immo.fr", required: true }), "s\xE9par\xE9s par des virgules")}
+${U.champ("Objets qui sont des leads", U.zone("objets_lead", "", 2, { placeholder: "nouveau contact\ndemande d'information" }), "un par ligne (vide = tous les mails de ce portail)")}
+${U.champ("Objets qui ne sont pas des leads", U.zone("objets_non_lead", "", 2, { placeholder: "facture\nnewsletter" }))}
+${U.champ("Libell\xE9s en plus (JSON)", U.zone("libelles", "", 2, { placeholder: '{"t\xE9l. perso": "telephone", "n\xB0 client": "ignorer"}' }), "champs : email, telephone, nom, prenom, reference, prix, ville, code_postal, message\u2026")}
+${U.champ("R\xE9f\xE9rence (expression)", U.input("reference", "", { placeholder: "R\xE9f\\\\.?\\\\s*:\\\\s*(\\\\S+)" }))}
+</div><div class="ld-actions"><button class="btn btn-sm btn-primary">D\xE9clarer ce portail</button></div></form>`)}
+
+${U.carte("Nouveaux exp\xE9diteurs \xB7 30 jours", U.table(["Domaine", "Mails", "Exemple", ""], nouveaux.filter((n) => n.d).map((n) => [esc(n.d), n.n, `<a href="/leads/l/${n.id}">${esc(String(n.o || "").slice(0, 70))}</a>`, `<a class="btn btn-sm btn-link" href="/leads/chaine?domaine=${encodeURIComponent(n.d)}">d\xE9clarer comme portail</a>`]), "Aucun exp\xE9diteur inconnu."))}`;
+      U.page(req, res, "Cha\xEEne et portails", "chaine", html);
+    };
+    var enregistrer = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const b = req.body || {}, t = await tables();
+      const etapes = Object.fromEntries(ETAPES.map(([k]) => [k, b["e_" + k] === "on"]).filter(([, v]) => v === false));
+      const marges = { prix: Math.max(0, +b.m_prix || 0) / 100, surface: Math.max(0, Math.min(90, +b.m_surface || 0)) / 100, pieces: Math.max(0, +b.m_pieces || 0) };
+      const row = {
+        etapes: JSON.stringify(etapes),
+        notifier_relances: ["negociateur", "tous", "non"].includes(b.notifier_relances) ? b.notifier_relances : "negociateur",
+        commentaire_max: Math.max(1e3, Math.min(6e4, +b.commentaire_max || 6e3)),
+        marges_projet: JSON.stringify(marges),
+        retention_jours: Math.max(0, +b.retention_jours || 0),
+        maj_le: /* @__PURE__ */ new Date()
+      };
+      const ex = (await t.reglages.getRows({}, { limit: 1 }))[0];
+      if (ex) await t.reglages.updateRow(row, ex.id);
+      else await t.reglages.insertRow(row);
+      go(res, "/leads/chaine", "Cha\xEEne enregistr\xE9e");
+    };
+    var portailAjouter = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const b = req.body || {}, t = await tables();
+      if (b.libelles) {
+        try {
+          JSON.parse(b.libelles);
+        } catch (e) {
+          return go(res, "/leads/chaine", "Libell\xE9s : JSON invalide", true);
+        }
+      }
+      for (const x of [...String(b.objets_lead || "").split("\n"), ...String(b.objets_non_lead || "").split("\n"), b.reference || ""].filter((s) => s.trim())) {
+        try {
+          new RegExp(x, "i");
+        } catch (e) {
+          return go(res, "/leads/chaine", `Expression invalide : ${x}`, true);
+        }
+      }
+      await t.portails.insertRow({ nom: String(b.nom).slice(0, 100), domaines: liste(b.domaines).map((x) => x.toLowerCase()).join(", "), objets_lead: String(b.objets_lead || ""), objets_non_lead: String(b.objets_non_lead || ""), libelles: String(b.libelles || ""), reference: String(b.reference || ""), nature: "lead", actif: true });
+      go(res, "/leads/chaine", "Portail d\xE9clar\xE9 : les prochains mails seront reconnus. \xAB Retraiter \xBB les anciens depuis leur fiche.");
+    };
+    var portailRetirer = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const t = await tables();
+      await t.portails.deleteRows({ id: +req.params.id });
+      go(res, "/leads/chaine", "Portail retir\xE9");
+    };
+    var catalogue = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      try {
+        const r = await synchroniser({ complet: (req.body || {}).complet === "1" });
+        go(res, "/leads/chaine", r.message, !r.ok);
+      } catch (e) {
+        go(res, "/leads/chaine", "Catalogue : " + e.message, true);
+      }
+    };
+    var webhookCle = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const cle = String((req.body || {}).cle || "").trim();
+      if (cle.length < 24) return go(res, "/leads/chaine", "Cl\xE9 trop courte (24 caract\xE8res au moins)", true);
+      const R2 = await lireReglages();
+      await flowApi().writeSecret((R2.prefixe_secrets || "LEADS_CRM") + "_WEBHOOK", cle, "dysizz-leads : webhook du CRM");
+      go(res, "/leads/chaine", "Cl\xE9 du webhook rang\xE9e");
+    };
+    var crochet = async (req, res) => {
+      try {
+        const R2 = await lireReglages();
+        const ok = await flowApi().secretEgal((R2.prefixe_secrets || "LEADS_CRM") + "_WEBHOOK", req.get("x-api-key"));
+        if (!ok) return res.status(401).json({ error: "cl\xE9 invalide" });
+        const b = req.body || {};
+        const type = String(b.event_type || b.type || ""), id = b.resource_id || b.id;
+        if (!/^PRODUCT_/i.test(type) || !id) return res.status(200).json({ ignore: true });
+        res.status(200).json({ recu: true });
+        const db_ = require("@saltcorn/data/db"), tenant = db_.getTenantSchema();
+        setImmediate(() => db_.runWithTenant(tenant, () => evenementBien(type, id)).catch(() => {
+        }));
+      } catch (e) {
+        if (!res.headersSent) res.status(500).json({ error: "erreur interne" });
+      }
+    };
+    module2.exports = { page, enregistrer, portailAjouter, portailRetirer, catalogue, webhookCle, crochet };
+  }
+});
+
 // ../src/blocks.js
 var require_blocks = __commonJS({
   "../src/blocks.js"(exports2, module2) {
     "use strict";
     var { charger } = require_conf();
-    var { enregistrer } = require_dossier();
+    var { enregistrer, traiterMail } = require_dossier();
     module2.exports = [
       {
         name: "dzx_leads_conf",
@@ -1177,6 +1738,19 @@ var require_blocks = __commonJS({
         run: async () => {
           const { conf, crm, reglages } = await charger();
           return { __merge: { leads_conf: conf, leads_crm: crm, leads_reglages: { envoi_mails: !!reglages.envoi_mails, mode: crm.mode } } };
+        }
+      },
+      {
+        name: "dzx_leads_traiter",
+        label: "Leads : traiter un mail re\xE7u",
+        category: "Leads immobiliers",
+        icon: "fas fa-bullseye",
+        output: "lead",
+        description: "Traite un mail de ld_mails de bout en bout : lecture sans IA, fil de conversation (dossier prospect \xD7 bien), bien (catalogue local), contact, plan CRM ex\xE9cut\xE9 selon le mode (ombre par d\xE9faut), destinataires. Deux mails du m\xEAme prospect ne sont jamais trait\xE9s en m\xEAme temps.",
+        params: [{ name: "id", label: "Id du mail (ld_mails)", type: "text", default: "{{id}}", required: true }],
+        run: async (p) => {
+          const r = await traiterMail(+p.id);
+          return { id: r.id, dossier_id: r.dossier_id, statut: r.statut };
         }
       },
       {
@@ -1193,6 +1767,83 @@ var require_blocks = __commonJS({
   }
 });
 
+// ../src/taches.js
+var require_taches = __commonJS({
+  "../src/taches.js"(exports2, module2) {
+    "use strict";
+    var cluster = require("cluster");
+    var G = globalThis[Symbol.for("dysizz-leads.taches")] || (globalThis[Symbol.for("dysizz-leads.taches")] = { minuteurs: /* @__PURE__ */ new Map() });
+    var log = (m) => {
+      try {
+        require("@saltcorn/data/db/state").getState().log(4, "[dysizz-leads] " + m);
+      } catch (e) {
+      }
+    };
+    var heure = async () => {
+      const { flowApi } = require_core();
+      const api = flowApi();
+      if (!api) return;
+      const jeton = await api.verrou.prendre("leads-taches-horaires").catch(() => null);
+      if (!jeton) return;
+      try {
+        const { reglages } = require_conf();
+        const R2 = await reglages();
+        const crm = (() => {
+          try {
+            return JSON.parse(R2.crm_reglages || "{}");
+          } catch (e) {
+            return {};
+          }
+        })();
+        if (crm.site_id || crm.domaine) {
+          try {
+            const r = await require_catalogue().synchroniser({ complet: !R2.catalogue_synchro_le });
+            if (r && r.ok) log("catalogue " + r.message);
+          } catch (e) {
+            log("catalogue : " + e.message);
+          }
+        }
+        try {
+          const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
+          const ids = (await db.query(`select m.id from "${S}".ld_mails m where m.recu_le < now() - interval '10 minutes' and m.recu_le > now() - interval '7 days'
+        and not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.date_envoi, m.id limit 100`)).rows.map((r) => r.id);
+          let ok = 0;
+          for (const id of ids) {
+            try {
+              await require_dossier().traiterMail(id);
+              ok++;
+            } catch (e) {
+              log(`reprise du mail ${id} : ${e.message}`);
+            }
+          }
+          if (ids.length) log(`reprise : ${ok}/${ids.length} mail(s) retrait\xE9(s)`);
+        } catch (e) {
+          log("reprise : " + e.message);
+        }
+        const j = +R2.retention_jours || 0;
+        if (j > 0) {
+          const db = require("@saltcorn/data/db");
+          const r = await db.query(`update "${db.getTenantSchema()}".ld_mails set corps_texte = '', corps_html = '', source_eml = '' where date_envoi < now() - ($1 || ' days')::interval and (corps_texte <> '' or corps_html <> '' or source_eml <> '')`, [String(j)]).catch((e) => ({ rowCount: 0, e }));
+          if (r.rowCount) log(`r\xE9tention : texte de ${r.rowCount} mail(s) effac\xE9`);
+        }
+      } finally {
+        await jeton.rendre();
+      }
+    };
+    var planifier = () => {
+      if (cluster.isWorker) return;
+      const db = require("@saltcorn/data/db");
+      const tenant = db.getTenantSchema();
+      if (G.minuteurs.has(tenant)) clearInterval(G.minuteurs.get(tenant));
+      G.minuteurs.set(tenant, setInterval(() => db.runWithTenant(tenant, heure).catch(() => {
+      }), 3600 * 1e3));
+      setTimeout(() => db.runWithTenant(tenant, heure).catch(() => {
+      }), 60 * 1e3);
+    };
+    module2.exports = { planifier, heure };
+  }
+});
+
 // ../src/index.js
 var { PLUGIN, VERSION, peutVoir } = require_core();
 var { CSS } = require_ui();
@@ -1200,6 +1851,8 @@ var L = require_leads();
 var E = require_equipe();
 var D = require_demandes();
 var R = require_reglages();
+var DO = require_dossiers();
+var CH = require_chaine();
 var asset = (req, res) => {
   if (req.params.file !== "ld.css") return res.status(404).send("");
   res.setHeader("Content-Type", "text/css; charset=utf-8");
@@ -1223,6 +1876,15 @@ module.exports = {
       await require_schema().tables();
     } catch (e) {
     }
+    try {
+      require_taches().planifier();
+    } catch (e) {
+    }
+    try {
+      const api = require_core().flowApi();
+      if (api && api.enregistrerBlocsExternes) api.enregistrerBlocsExternes();
+    } catch (e) {
+    }
   },
   routes: [
     { url: "/leads", method: "get", callback: garde(L.tableau) },
@@ -1230,6 +1892,16 @@ module.exports = {
     { url: "/leads/l/:id", method: "get", callback: garde(L.fiche) },
     { url: "/leads/l/:id/retraiter", method: "post", callback: garde(L.retraiterPost) },
     { url: "/leads/l/:id/decision", method: "post", callback: garde(L.decisionPost) },
+    { url: "/leads/dossiers", method: "get", callback: garde(DO.liste) },
+    { url: "/leads/dossier/:id", method: "get", callback: garde(DO.fiche) },
+    { url: "/leads/chaine", method: "get", callback: garde(CH.page) },
+    { url: "/leads/chaine", method: "post", callback: garde(CH.enregistrer) },
+    { url: "/leads/chaine/webhook", method: "post", callback: garde(CH.webhookCle) },
+    { url: "/leads/portails", method: "post", callback: garde(CH.portailAjouter) },
+    { url: "/leads/portails/:id/supprimer", method: "post", callback: garde(CH.portailRetirer) },
+    { url: "/leads/catalogue", method: "post", callback: garde(CH.catalogue) },
+    /* webhook du CRM : appelé de l'extérieur (clé dans X-Api-Key), donc sans jeton CSRF */
+    { url: "/leads/crochet/crm", method: "post", noCsrf: true, callback: CH.crochet },
     { url: "/leads/envoi", method: "get", callback: garde(E.envoi) },
     { url: "/leads/envoi/regle", method: "post", callback: garde(E.regleSave) },
     { url: "/leads/envoi/regle/:id/supprimer", method: "post", callback: garde(E.regleSuppr) },
