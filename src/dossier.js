@@ -8,6 +8,7 @@ const { charger } = require("./conf");
 const { flowApi } = require("./core");
 const fil = require("./fil");
 const { avecCatalogue } = require("./catalogue");
+const G = require("./gabarits");
 
 const courte = (v, n = 900) => String(v == null ? "" : v).slice(0, n);
 const sansCommentaire = (a) => (a && a.donnees && a.donnees.comment ? { ...a, donnees: { ...a.donnees, comment: `(${a.donnees.comment.length} caractères)` } } : a);
@@ -17,7 +18,7 @@ const versLigne = (d, mail = {}) => {
   return {
     mail_id: mail.id || null, message_id: courte(mail.message_id, 300), recu_le: mail.date_envoi || mail.recu_le || new Date(), traite_le: new Date(),
     expediteur: courte(mail.expediteur, 300), objet: courte(mail.objet, 400),
-    portail: x.portail || "", nature: x.nature || "", statut: d.statut, role: d.role || "",
+    portail: x.portail === "inconnu" || !x.portail ? x.portail_nom || x.portail || "" : x.portail, nature: x.nature || "", statut: d.statut, role: d.role || "", lu_par: (x.lu_par || []).join("+"),
     contact_nom: courte([c.prenom, c.nom].filter(Boolean).join(" ") || c.nom_complet, 200), contact_email: c.email || c.email_relais || "", contact_tel: c.telephone || "",
     contact_crm: ex.contactId && !/^ombre-/.test(String(ex.contactId)) ? String(ex.contactId) : d.contact && d.contact.id ? String(d.contact.id) : "", contact_action: (d.contact && d.contact.action) || "",
     reference: (x.bien && (x.bien.reference || x.bien.id_crm || x.bien.reference_portail)) || "",
@@ -66,7 +67,8 @@ const traiterMail = async (mailId, { forcerOmbre = false } = {}) => {
   const client = await avecCatalogue(api.crmDepuisCoffre(crm.type, crm.reglages, crm.prefixe, mode));
   const m = versMoteur(mail);
   return api.verrou.sous(cleVerrou(api, m, conf, mail.id), async () => {
-    const d = await api.leads.traiter(m, client, conf, { dossiers: { trouver: fil.trouver } });
+    const lecture = await G.optionsLecture(api).catch(() => ({}));
+    const d = await api.leads.traiter(m, client, conf, { dossiers: { trouver: fil.trouver }, ...lecture });
     d.execution = { ...(await api.leads.executer(d, client, { mode })), mode };
     if (client.notees) d.execution.ecritures_notees = client.notees.map(sansCommentaire);
     /* un mail « à trier » ne crée pas de dossier ; il peut en compléter un */

@@ -2,7 +2,7 @@
 "use strict";
 const { esc, VERSION } = require("./core");
 
-const ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Dossiers", "fas fa-comments"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "Réglages", "fas fa-sliders-h"], ["chaine", "Chaîne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
+const ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Conversations", "fas fa-comments"], ["lecture", "Lecture des mails", "fas fa-wand-magic-sparkles"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "Réglages", "fas fa-sliders-h"], ["chaine", "Chaîne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
 
 const flash = (req) => { const q = req.query || {}; return q.ok ? `<div class="ld-flash ok">${esc(q.ok)}</div>` : q.err ? `<div class="ld-flash ko">${esc(q.err)}</div>` : ""; };
 
@@ -50,7 +50,8 @@ const CSS = `
 .ld-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 14px;align-items:start}.ld-champ{display:flex;flex-direction:column;gap:3px;margin:0}.ld-champ>span{font-size:12.5px;font-weight:600}.ld-champ small{color:var(--ld-m);font-size:11.5px}
 .ld-coche{display:flex;gap:6px;align-items:center;margin:0;font-size:13px}.ld-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .ld-filtres{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:10px}.ld-filtres .form-control,.ld-filtres .form-select{width:auto;min-width:150px}
-.ld-trace{margin:0;padding-left:18px;font-size:13px}.ld-trace li{margin:2px 0}.ld-kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:4px 14px;font-size:13px}.ld-kv dt{color:var(--ld-m);font-weight:500}.ld-kv dd{margin:0;word-break:break-word}
+.ld code{color:var(--ld-t);background:var(--ld-f);padding:0 4px;border-radius:3px;font-size:12.5px}
+.ld-trace{margin:0;padding-left:24px;font-size:13px}.ld-trace li{margin:2px 0}.ld-kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:4px 14px;font-size:13px}.ld-kv dt{color:var(--ld-m);font-weight:500}.ld-kv dd{margin:0;word-break:break-word}
 .ld-semaine td.abs{background:rgba(180,35,24,.08)}.ld-semaine td.hors{background:rgba(161,92,0,.08)}.ld-semaine td{font-size:12.5px}
 .ld-board{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:10px;overflow-x:auto}.ld-col{border:1px solid var(--ld-b);border-radius:8px;min-height:120px}.ld-col h3{font-size:13px;margin:0;padding:8px 10px;border-bottom:1px solid var(--ld-b);background:var(--ld-f)}
 .ld-ticket{display:block;margin:8px;padding:8px 10px;border:1px solid var(--ld-b);border-radius:6px;text-decoration:none;color:inherit}.ld-ticket:hover{border-color:var(--ld-a)}.ld-ticket b{display:block;font-size:13px}

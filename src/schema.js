@@ -10,7 +10,8 @@ const T = {
     ["domaines_agence", "String"], ["sites", "String"], ["objets_campagnes", "String"], ["id_crm_liens", "String"], ["origines_portail", "String"],
     ["boite_ecouteur", "String"], ["maj_le", "Date"],
     ["etapes", "String"], ["notifier_relances", "String"], ["marges_projet", "String"], ["commentaire_max", "Integer"], ["retention_jours", "Integer"],
-    ["action_lead", "String"], ["catalogue_synchro_le", "Date"], ["catalogue_etat", "String"]] },
+    ["action_lead", "String"], ["catalogue_synchro_le", "Date"], ["catalogue_etat", "String"],
+    ["ia_actif", "Bool"], ["ia_fournisseur", "String"], ["ia_modele", "String"], ["ia_plafond_jour", "Integer"], ["ia_url", "String"], ["gabarits_partages", "Bool"]] },
   agences: { name: "ld_agences", desc: "Agences", fields: [["nom", "String", { required: true }], ["crm_id", "String"], ["boites", "String"], ["negociateur_defaut", "String"], ["actif", "Bool"]] },
   personnes: { name: "ld_personnes", desc: "Négociateurs et assistant(e)s", fields: [
     ["nom", "String", { required: true }], ["email", "String"], ["role", "String"], ["crm_id", "String"], ["agence_crm_id", "String"],
@@ -28,7 +29,7 @@ const T = {
     ["reference", "String"], ["bien_crm", "String"], ["bien_ref_crm", "String"], ["bien_methode", "String"], ["bien_confiance", "String"],
     ["agence", "String"], ["negociateur", "String"], ["origine", "String"], ["site", "String"], ["destinataires", "String"],
     ["motifs", "String"], ["alertes", "String"], ["mode", "String"], ["actions", "String"], ["dossier", "String"], ["duree_ms", "Integer"],
-    ["ancien_statut", "String"], ["ancien_bien", "String"], ["ancien_destinataires", "String"], ["dossier_id", "Integer"], ["role", "String"]] },
+    ["ancien_statut", "String"], ["ancien_bien", "String"], ["ancien_destinataires", "String"], ["dossier_id", "Integer"], ["role", "String"], ["lu_par", "String"]] },
   dossiers: { name: "ld_dossiers", desc: "Dossiers (un prospect × un bien)", index: ["email", "relais", "tel9", "bien_crm"], fields: [
     ["relais", "String"], ["email", "String"], ["telephone", "String"], ["tel9", "String"], ["reference", "String"], ["bien_crm", "String"], ["bien_ref", "String"],
     ["contact_crm", "String"], ["recherche_crm", "String"], ["consentement", "Bool"], ["negociateur", "String"], ["agence", "String"], ["portail", "String"], ["nom", "String"],
@@ -40,6 +41,11 @@ const T = {
     ["ville", "String"], ["code_postal", "String"], ["negociateur", "String"], ["agence", "String"], ["proprietaire", "String"], ["supprime", "Bool"], ["synchro_le", "Date"]] },
   portails: { name: "ld_portails", desc: "Portails déclarés par le client (sans code)", fields: [
     ["nom", "String", { required: true }], ["domaines", "String"], ["objets_lead", "String"], ["objets_non_lead", "String"], ["libelles", "String"], ["reference", "String"], ["nature", "String"], ["actif", "Bool"]] },
+  gabarits: { name: "ld_gabarits", desc: "Gabarits de mails appris automatiquement (forme d'un type de mail, sans donnée personnelle)", index: ["statut"], fields: [
+    ["source", "String"], ["nature", "String"], ["signature", "String"], ["champs", "String"], ["statut", "String"], ["nb_observations", "Integer"], ["nb_echecs", "Integer"],
+    ["nb_utilisations", "Integer"], ["origine", "String"], ["cree_le", "Date"], ["vu_le", "Date"], ["active_le", "Date"], ["suspendu_le", "Date"]] },
+  ia: { name: "ld_ia", desc: "Appels à l'IA (pour le plafond et le suivi des coûts)", index: ["quand"], fields: [
+    ["quand", "Date"], ["ok", "Bool"], ["ms", "Integer"], ["nature", "String"], ["source", "String"], ["erreur", "String"]] },
   demandes: { name: "ld_demandes", desc: "Demandes d'évolution et incidents", fields: [
     ["titre", "String", { required: true }], ["description", "String"], ["urgence", "String"], ["statut", "String"], ["demandeur", "String"], ["cree_le", "Date"], ["maj_le", "Date"]] },
   etapes: { name: "ld_demande_etapes", desc: "Historique des demandes", fields: [["demande", "Integer", { required: true }], ["statut", "String"], ["quand", "Date"], ["note", "String"], ["par", "String"]] },

@@ -1,5 +1,13 @@
 # Journal des versions
 
+## 1.2.0
+
+- **Lecture des mails** (nouvel onglet) : part des mails lus par les règles, par un gabarit appris, complétés par l'IA ; appels d'IA du jour et plafond ; liste des gabarits appris (champs lus, observations, échecs, suspendre / activer) ; import de `gabarit_version.json` de l'ancien AMBS.
+- **IA** : réglable par client (plugin Saltcorn déjà réglé, OpenAI ou API compatible, Anthropic), clé rangée dans le coffre (`LEADS_IA_CLE`), plafond d'appels par jour (`ld_ia`) ; les mails laissés de côté au plafond sont relus le lendemain.
+- **Gabarits appris** (`ld_gabarits`) : rien à déclarer à la main pour un nouveau portail. Bibliothèque commune facultative entre clients : seule la forme des mails de portails est partagée, jamais une donnée de prospect.
+- « Dossiers » renommé **Conversations** (un prospect × un bien : sa demande, ses relances, les réponses de l'agence). Les portails déclarés à la main deviennent facultatifs.
+- Fiche d'un lead : « Lu par » (règles, gabarit, IA), justification de l'IA et valeurs refusées car absentes du mail.
+
 ## 1.1.0
 
 - **Dossiers** (prospect × bien) : tous les mails d'un même prospect sur un même bien sont regroupés ; la conversation complète est gardée (`ld_dossiers`, `ld_evenements`) et visible dans l'écran Dossiers.

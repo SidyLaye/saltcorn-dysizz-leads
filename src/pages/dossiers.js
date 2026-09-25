@@ -1,4 +1,7 @@
-/* Dossiers (prospect × bien) : liste, fil de conversation, délai de réponse de l'équipe. */
+/* Conversations : une conversation = un prospect au sujet d'un bien (comme un fil de mails).
+   Tous les mails de ce prospect pour ce bien s'y rangent : sa demande, ses relances, les réponses de l'agence.
+   C'est ce qui évite de créer un lead à chaque mail, et ce qui sert à écrire le commentaire du CRM.
+   (dans les tables : ld_dossiers / ld_evenements) */
 "use strict";
 const { esc, peutVoir, go, dateFr, flowApi } = require("../core");
 const { tables } = require("../schema");
@@ -27,22 +30,22 @@ const liste = async (req, res) => {
   const nom = new Map(((conf.routage && conf.routage.personnes) || []).map((x) => [String(x.id), x.nom]));
   const qs = (o) => "?" + new URLSearchParams({ ...q, ...o }).toString();
   const html = `<form class="ld-filtres" method="get"><input class="form-control form-control-sm" name="q" value="${esc(q.q || "")}" placeholder="Nom, e-mail, référence…">
-${U.coche("sans_reponse", q.sans_reponse === "1", "sans réponse de l'équipe").replace('name="sans_reponse"', 'name="sans_reponse" value="1"')}<button class="btn btn-sm btn-primary">Filtrer</button> <span class="ld-mute">${total} dossier(s)</span></form>
+${U.coche("sans_reponse", q.sans_reponse === "1", "sans réponse de l'équipe").replace('name="sans_reponse"', 'name="sans_reponse" value="1"')}<button class="btn btn-sm btn-primary">Filtrer</button> <span class="ld-mute">${total} conversation(s) · <span title="une conversation = un prospect × un bien : sa demande, ses relances et les réponses de l'agence">un prospect × un bien</span></span></form>
 ${U.table(["Dernière activité", "Prospect", "Bien", "Négociateur", "Mails", "Réponse de l'équipe"], rows.map((r) => [
     `<a href="/leads/dossier/${r.id}">${esc(dateFr(r.derniere_activite))}</a>`,
     `${esc(r.nom || "")}<br><small class="ld-mute">${esc(r.email || r.relais || r.telephone || "")}</small>`,
     `${esc(r.bien_ref || r.reference || "—")}<br><small class="ld-mute">${esc(r.portail || "")}</small>`,
     esc(nom.get(String(r.negociateur)) || r.negociateur || "—"), esc(r.nb_mails || 1),
-    r.reponse_le ? `${U.pill("répondu", "ok")} <small class="ld-mute">en ${esc(duree(new Date(r.reponse_le) - new Date(r.premiere_demande)))}</small>` : U.pill("pas encore", Date.now() - new Date(r.premiere_demande) > 864e5 ? "ko" : "warn")]), "Aucun dossier.")}
+    r.reponse_le ? `${U.pill("répondu", "ok")} <small class="ld-mute">en ${esc(duree(new Date(r.reponse_le) - new Date(r.premiere_demande)))}</small>` : U.pill("pas encore", Date.now() - new Date(r.premiere_demande) > 864e5 ? "ko" : "warn")]), "Aucune conversation.")}
 <div class="ld-pages">${page > 1 ? `<a class="btn btn-sm btn-outline-secondary" href="${qs({ page: page - 1 })}">Précédents</a>` : ""}${page * 50 < total ? `<a class="btn btn-sm btn-outline-secondary" href="${qs({ page: page + 1 })}">Suivants</a>` : ""}</div>`;
-  U.page(req, res, "Dossiers", "dossiers", html);
+  U.page(req, res, "Conversations", "dossiers", html);
 };
 
 const fiche = async (req, res) => {
   if (!peutVoir(req)) return refuse(res);
   const t = await tables();
   const d = await t.dossiers.getRow({ id: +req.params.id });
-  if (!d) return go(res, "/leads/dossiers", "Dossier introuvable", true);
+  if (!d) return go(res, "/leads/dossiers", "Conversation introuvable", true);
   const evts = await t.evenements.getRows({ dossier: d.id }, { orderBy: "quand" });
   const leads = await t.leads.getRows({ dossier_id: d.id }, { orderBy: "recu_le" });
   const api = flowApi();
@@ -54,14 +57,14 @@ const fiche = async (req, res) => {
   const html = `<div class="ld-grille ld-g2">
 ${U.carte("Conversation", fil || '<p class="ld-vide">Aucun message.</p>')}
 <div>
-${U.carte("Dossier", `<dl class="ld-kv"><dt>Prospect</dt><dd>${esc(d.nom || "—")}</dd><dt>E-mail</dt><dd>${esc(d.email || "—")}</dd><dt>Relais du portail</dt><dd>${esc(d.relais || "—")}</dd><dt>Téléphone</dt><dd>${esc(d.telephone || "—")}</dd>
+${U.carte("Prospect et bien", `<dl class="ld-kv"><dt>Prospect</dt><dd>${esc(d.nom || "—")}</dd><dt>E-mail</dt><dd>${esc(d.email || "—")}</dd><dt>Relais du portail</dt><dd>${esc(d.relais || "—")}</dd><dt>Téléphone</dt><dd>${esc(d.telephone || "—")}</dd>
 <dt>Bien</dt><dd>${esc(d.bien_ref || d.reference || "—")} ${d.bien_crm ? `<span class="ld-mute">(id ${esc(d.bien_crm)})</span>` : ""}</dd><dt>Négociateur</dt><dd>${esc(d.negociateur || "—")}</dd>
 <dt>Contact CRM</dt><dd>${esc(d.contact_crm || "— (mode ombre)")}</dd><dt>Projet de recherche</dt><dd>${esc(d.recherche_crm || "—")}</dd><dt>Consentement</dt><dd>${d.consentement ? U.pill("posé", "ok") : U.pill("non", "mute")}</dd>
 <dt>1re demande</dt><dd>${esc(dateFr(d.premiere_demande))}</dd><dt>1re réponse de l'équipe</dt><dd>${d.reponse_le ? esc(dateFr(d.reponse_le)) + " · " + esc(duree(new Date(d.reponse_le) - new Date(d.premiere_demande))) : U.pill("pas encore", "warn")}</dd></dl>`)}
-${U.carte("Mails du dossier", U.table(["Reçu", "Nature", "Statut"], leads.map((l) => [`<a href="/leads/l/${l.id}">${esc(dateFr(l.recu_le))}</a>`, esc(l.nature), U.badge(l.decision || l.statut)])))}
+${U.carte("Mails de la conversation", U.table(["Reçu", "Nature", "Statut"], leads.map((l) => [`<a href="/leads/l/${l.id}">${esc(dateFr(l.recu_le))}</a>`, esc(l.nature), U.badge(l.decision || l.statut)])))}
 ${U.carte("Commentaire écrit dans le CRM (projet de recherche)", `<pre class="ld-pre">${esc(comment)}</pre><p class="ld-mute" style="margin:6px 0 0">Reconstruit à chaque mail à partir de toute la conversation ; rien n'est ajouté en double.</p>`)}
 </div></div>`;
-  U.page(req, res, "Dossier · " + (d.nom || d.email || d.id), "dossiers", html);
+  U.page(req, res, "Conversation · " + (d.nom || d.email || d.id), "dossiers", html);
 };
 
 /* Chiffres pour le tableau de bord : délai de première réponse, dossiers sans réponse. */

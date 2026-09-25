@@ -20,7 +20,7 @@ CRM disponibles : **Immofacile** (API V2) et **Salesforce** (objets et champs r�
 L'unité de travail est le **dossier** : un prospect × un bien. Un mail crée un dossier, le complète (relance, réponse du prospect) ou y ajoute la réponse de l'équipe. Le détail et les raisons sont dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 1. **Écoute** : la boîte est écoutée en temps réel (IMAP IDLE), en lecture seule, par un seul serveur à la fois. Le mail est rangé dans `ld_mails` avec ses en-têtes de fil et sa source `.eml`.
-2. **Lecture sans IA** : 30 portails dans le code, plus ceux que le client déclare lui-même (écran Chaîne). Un expéditeur inconnu dont le mail ressemble à une fiche de lead est traité et signalé « à déclarer ». Chaque champ dit d'où il vient.
+2. **Lecture des mails en trois étages** : règles pour les 30 portails du code ; gabarits appris tout seuls pour les nouveaux portails et les nouvelles mises en page ; IA seulement quand le mail reste inconnu ou incomplet, et sa lecture apprend un gabarit (au 3e mail de la même forme, plus d'IA). Rien à déclarer à la main. Chaque valeur de l'IA est revérifiée dans le mail ; chaque champ dit d'où il vient.
 3. **Fil** : le mail est rattaché au dossier du prospect (relais du portail, e-mail, téléphone, référence citée). Deux mails du même prospect ne sont jamais traités en même temps.
    - Une réponse d'un négociateur **n'est jamais un lead** : elle rejoint le dossier et donne le délai de réponse.
    - Une réponse du prospect sans référence reprend le bien du dossier.

@@ -14,6 +14,7 @@ const D = require("./pages/demandes");
 const R = require("./pages/reglages");
 const DO = require("./pages/dossiers");
 const CH = require("./pages/chaine");
+const LE = require("./pages/lecture");
 
 const asset = (req, res) => {
   if (req.params.file !== "ld.css") return res.status(404).send("");
@@ -42,6 +43,10 @@ module.exports = {
     { url: "/leads/l/:id/decision", method: "post", callback: garde(L.decisionPost) },
     { url: "/leads/dossiers", method: "get", callback: garde(DO.liste) },
     { url: "/leads/dossier/:id", method: "get", callback: garde(DO.fiche) },
+    { url: "/leads/lecture", method: "get", callback: garde(LE.page) },
+    { url: "/leads/lecture", method: "post", callback: garde(LE.enregistrer) },
+    { url: "/leads/gabarits/import", method: "post", callback: garde(LE.importer) },
+    { url: "/leads/gabarits/:id/statut", method: "post", callback: garde(LE.statut) },
     { url: "/leads/chaine", method: "get", callback: garde(CH.page) },
     { url: "/leads/chaine", method: "post", callback: garde(CH.enregistrer) },
     { url: "/leads/chaine/webhook", method: "post", callback: garde(CH.webhookCle) },

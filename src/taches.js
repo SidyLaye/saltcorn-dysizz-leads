@@ -28,6 +28,13 @@ const heure = async () => {
       for (const id of ids) { try { await require("./dossier").traiterMail(id); ok++; } catch (e) { log(`reprise du mail ${id} : ${e.message}`); } }
       if (ids.length) log(`reprise : ${ok}/${ids.length} mail(s) retraité(s)`);
     } catch (e) { log("reprise : " + e.message); }
+    /* mails laissés de côté la veille faute de budget d'IA (plafond atteint) : relus une fois le plafond remis à zéro */
+    if (R.ia_actif) try {
+      const db = require("@saltcorn/data/db"), S2 = db.getTenantSchema();
+      const ids = (await db.query(`select mail_id from "${S2}".ld_leads where alertes like '%plafond du jour%' and traite_le < date_trunc('day', now() at time zone 'Europe/Paris') at time zone 'Europe/Paris' and traite_le > now() - interval '3 days' and mail_id is not null order by traite_le limit 50`)).rows.map((r) => r.mail_id);
+      for (const id of ids) { try { await require("./dossier").traiterMail(id); } catch (e) { log(`relecture IA du mail ${id} : ${e.message}`); } }
+      await db.query(`delete from "${S2}".ld_ia where quand < now() - interval '90 days'`);
+    } catch (e) { log("relecture IA : " + e.message); }
     const j = +R.retention_jours || 0;
     if (j > 0) {
       const db = require("@saltcorn/data/db");

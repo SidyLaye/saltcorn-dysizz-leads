@@ -1,16 +1,16 @@
-/* dysizz-leads 1.1.0 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
+/* dysizz-leads 1.2.0 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
 "use strict";
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../src/core.js
+// src/core.js
 var require_core = __commonJS({
-  "../src/core.js"(exports2, module2) {
+  "src/core.js"(exports2, module2) {
     "use strict";
     var PLUGIN2 = "dysizz-leads";
-    var VERSION2 = true ? "1.1.0" : "dev";
+    var VERSION2 = true ? "1.2.0" : "dev";
     var isAdmin = (req) => !!(req && req.user && req.user.role_id === 1);
     var peutVoir2 = (req) => !!(req && req.user && req.user.role_id <= 40);
     var esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -38,12 +38,12 @@ var require_core = __commonJS({
   }
 });
 
-// ../src/ui.js
+// src/ui.js
 var require_ui = __commonJS({
-  "../src/ui.js"(exports2, module2) {
+  "src/ui.js"(exports2, module2) {
     "use strict";
     var { esc, VERSION: VERSION2 } = require_core();
-    var ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Dossiers", "fas fa-comments"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "R\xE9glages", "fas fa-sliders-h"], ["chaine", "Cha\xEEne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
+    var ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Conversations", "fas fa-comments"], ["lecture", "Lecture des mails", "fas fa-wand-magic-sparkles"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "R\xE9glages", "fas fa-sliders-h"], ["chaine", "Cha\xEEne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
     var flash = (req) => {
       const q = req.query || {};
       return q.ok ? `<div class="ld-flash ok">${esc(q.ok)}</div>` : q.err ? `<div class="ld-flash ko">${esc(q.err)}</div>` : "";
@@ -94,7 +94,8 @@ ${bandeau}${flash(req)}<h1 class="ld-titre">${esc(titre)}</h1>${html}</div>`.rep
 .ld-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 14px;align-items:start}.ld-champ{display:flex;flex-direction:column;gap:3px;margin:0}.ld-champ>span{font-size:12.5px;font-weight:600}.ld-champ small{color:var(--ld-m);font-size:11.5px}
 .ld-coche{display:flex;gap:6px;align-items:center;margin:0;font-size:13px}.ld-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .ld-filtres{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:10px}.ld-filtres .form-control,.ld-filtres .form-select{width:auto;min-width:150px}
-.ld-trace{margin:0;padding-left:18px;font-size:13px}.ld-trace li{margin:2px 0}.ld-kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:4px 14px;font-size:13px}.ld-kv dt{color:var(--ld-m);font-weight:500}.ld-kv dd{margin:0;word-break:break-word}
+.ld code{color:var(--ld-t);background:var(--ld-f);padding:0 4px;border-radius:3px;font-size:12.5px}
+.ld-trace{margin:0;padding-left:24px;font-size:13px}.ld-trace li{margin:2px 0}.ld-kv{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:4px 14px;font-size:13px}.ld-kv dt{color:var(--ld-m);font-weight:500}.ld-kv dd{margin:0;word-break:break-word}
 .ld-semaine td.abs{background:rgba(180,35,24,.08)}.ld-semaine td.hors{background:rgba(161,92,0,.08)}.ld-semaine td{font-size:12.5px}
 .ld-board{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:10px;overflow-x:auto}.ld-col{border:1px solid var(--ld-b);border-radius:8px;min-height:120px}.ld-col h3{font-size:13px;margin:0;padding:8px 10px;border-bottom:1px solid var(--ld-b);background:var(--ld-f)}
 .ld-ticket{display:block;margin:8px;padding:8px 10px;border:1px solid var(--ld-b);border-radius:6px;text-decoration:none;color:inherit}.ld-ticket:hover{border-color:var(--ld-a)}.ld-ticket b{display:block;font-size:13px}
@@ -108,9 +109,9 @@ ${bandeau}${flash(req)}<h1 class="ld-titre">${esc(titre)}</h1>${html}</div>`.rep
   }
 });
 
-// ../src/schema.js
+// src/schema.js
 var require_schema = __commonJS({
-  "../src/schema.js"(exports2, module2) {
+  "src/schema.js"(exports2, module2) {
     "use strict";
     var T = {
       reglages: { name: "ld_reglages", desc: "R\xE9glages du client (une seule ligne)", fields: [
@@ -136,7 +137,13 @@ var require_schema = __commonJS({
         ["retention_jours", "Integer"],
         ["action_lead", "String"],
         ["catalogue_synchro_le", "Date"],
-        ["catalogue_etat", "String"]
+        ["catalogue_etat", "String"],
+        ["ia_actif", "Bool"],
+        ["ia_fournisseur", "String"],
+        ["ia_modele", "String"],
+        ["ia_plafond_jour", "Integer"],
+        ["ia_url", "String"],
+        ["gabarits_partages", "Bool"]
       ] },
       agences: { name: "ld_agences", desc: "Agences", fields: [["nom", "String", { required: true }], ["crm_id", "String"], ["boites", "String"], ["negociateur_defaut", "String"], ["actif", "Bool"]] },
       personnes: { name: "ld_personnes", desc: "N\xE9gociateurs et assistant(e)s", fields: [
@@ -203,7 +210,8 @@ var require_schema = __commonJS({
         ["ancien_bien", "String"],
         ["ancien_destinataires", "String"],
         ["dossier_id", "Integer"],
-        ["role", "String"]
+        ["role", "String"],
+        ["lu_par", "String"]
       ] },
       dossiers: { name: "ld_dossiers", desc: "Dossiers (un prospect \xD7 un bien)", index: ["email", "relais", "tel9", "bien_crm"], fields: [
         ["relais", "String"],
@@ -266,6 +274,29 @@ var require_schema = __commonJS({
         ["nature", "String"],
         ["actif", "Bool"]
       ] },
+      gabarits: { name: "ld_gabarits", desc: "Gabarits de mails appris automatiquement (forme d'un type de mail, sans donn\xE9e personnelle)", index: ["statut"], fields: [
+        ["source", "String"],
+        ["nature", "String"],
+        ["signature", "String"],
+        ["champs", "String"],
+        ["statut", "String"],
+        ["nb_observations", "Integer"],
+        ["nb_echecs", "Integer"],
+        ["nb_utilisations", "Integer"],
+        ["origine", "String"],
+        ["cree_le", "Date"],
+        ["vu_le", "Date"],
+        ["active_le", "Date"],
+        ["suspendu_le", "Date"]
+      ] },
+      ia: { name: "ld_ia", desc: "Appels \xE0 l'IA (pour le plafond et le suivi des co\xFBts)", index: ["quand"], fields: [
+        ["quand", "Date"],
+        ["ok", "Bool"],
+        ["ms", "Integer"],
+        ["nature", "String"],
+        ["source", "String"],
+        ["erreur", "String"]
+      ] },
       demandes: { name: "ld_demandes", desc: "Demandes d'\xE9volution et incidents", fields: [
         ["titre", "String", { required: true }],
         ["description", "String"],
@@ -318,9 +349,9 @@ var require_schema = __commonJS({
   }
 });
 
-// ../src/conf.js
+// src/conf.js
 var require_conf = __commonJS({
-  "../src/conf.js"(exports2, module2) {
+  "src/conf.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var liste = (s) => String(s || "").split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
@@ -421,9 +452,9 @@ var require_conf = __commonJS({
   }
 });
 
-// ../src/fil.js
+// src/fil.js
 var require_fil = __commonJS({
-  "../src/fil.js"(exports2, module2) {
+  "src/fil.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var tel9 = (t) => String(t || "").replace(/\D/g, "").slice(-9);
@@ -506,9 +537,9 @@ var require_fil = __commonJS({
   }
 });
 
-// ../src/catalogue.js
+// src/catalogue.js
 var require_catalogue = __commonJS({
-  "../src/catalogue.js"(exports2, module2) {
+  "src/catalogue.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var { flowApi } = require_core();
@@ -621,15 +652,152 @@ var require_catalogue = __commonJS({
   }
 });
 
-// ../src/dossier.js
+// src/gabarits.js
+var require_gabarits = __commonJS({
+  "src/gabarits.js"(exports2, module2) {
+    "use strict";
+    var { tables } = require_schema();
+    var { reglages } = require_conf();
+    var db = () => require("@saltcorn/data/db");
+    var tenant = () => {
+      try {
+        return db().getTenantSchema();
+      } catch (e) {
+        return "public";
+      }
+    };
+    var json = (s, d) => {
+      if (s && typeof s === "object") return s;
+      try {
+        return JSON.parse(s);
+      } catch (e) {
+        return d;
+      }
+    };
+    var C = globalThis[Symbol.for("dysizz-leads.gabarits")] || (globalThis[Symbol.for("dysizz-leads.gabarits")] = /* @__PURE__ */ new Map());
+    var oublier = () => C.delete(tenant());
+    var versGabarit = (r) => ({ ...r, signature: json(r.signature, {}), champs: json(r.champs, []) });
+    var versLigne = (g) => {
+      const o = {};
+      for (const k of ["source", "nature", "statut", "nb_observations", "nb_echecs", "nb_utilisations", "origine", "cree_le", "vu_le", "active_le", "suspendu_le"]) if (g[k] !== void 0) o[k] = g[k];
+      if (g.signature !== void 0) o.signature = JSON.stringify(g.signature);
+      if (g.champs !== void 0) o.champs = JSON.stringify(g.champs);
+      for (const k of ["cree_le", "vu_le", "active_le", "suspendu_le"]) if (o[k]) o[k] = new Date(o[k]);
+      return o;
+    };
+    var COMMUNS = `"public".dzl_gabarits_communs`;
+    var communsPrets = /* @__PURE__ */ new Set();
+    var preparerCommuns = async () => {
+      if (db().isSQLite || communsPrets.has("x")) return !db().isSQLite;
+      await db().query(`create table if not exists ${COMMUNS} (cle text primary key, source text, nature text, signature text, champs text, clients text, maj_le timestamptz default now())`);
+      communsPrets.add("x");
+      return true;
+    };
+    var lireCommuns = async () => {
+      if (!await preparerCommuns().catch(() => false)) return [];
+      return (await db().query(`select * from ${COMMUNS} order by maj_le desc limit 2000`)).rows.map((r) => ({ id: "c:" + r.cle, source: r.source, nature: r.nature, signature: json(r.signature, {}), champs: json(r.champs, []), statut: "actif", nb_observations: 0, origine: "commun" }));
+    };
+    var publier = async (api, g, R2) => {
+      if (!R2.gabarits_partages || !await preparerCommuns().catch(() => false)) return;
+      const A = api.leads.apprentissage;
+      const dom = String((g.signature || {}).expediteur || "").replace(/\\/g, "").replace(/\$$/, "");
+      if (!dom || String(R2.domaines_agence || "").toLowerCase().split(/[\s,;]+/).some((d) => d && dom.endsWith(d))) return;
+      if ((g.champs || []).some((c) => A.motifSur(c.motif))) return;
+      const cle = require("crypto").createHash("sha1").update(A.cleForme(g) + JSON.stringify(g.champs)).digest("hex");
+      await db().query(
+        `insert into ${COMMUNS} (cle, source, nature, signature, champs, clients) values ($1,$2,$3,$4,$5,$6)
+    on conflict (cle) do update set maj_le = now(), clients = case when position($6 in coalesce(${COMMUNS}.clients,'')) > 0 then ${COMMUNS}.clients else coalesce(${COMMUNS}.clients,'') || ',' || $6 end`,
+        [cle, g.source, g.nature, JSON.stringify(g.signature), JSON.stringify(g.champs), tenant()]
+      );
+    };
+    var stockage = (api, R2) => {
+      const A = api.leads.apprentissage;
+      const lister = async () => {
+        const k = tenant(), c = C.get(k);
+        if (c && Date.now() - c.t < 6e4) return c.l;
+        const t = await tables();
+        const locaux = (await t.gabarits.getRows({})).map(versGabarit);
+        let communs = R2.gabarits_partages ? await lireCommuns().catch(() => []) : [];
+        const vus = new Set(locaux.map((g) => A.cleForme(g) + JSON.stringify(g.champs)));
+        communs = communs.filter((g) => !vus.has(A.cleForme(g) + JSON.stringify(g.champs)));
+        const l = [...locaux, ...communs];
+        C.set(k, { t: Date.now(), l });
+        return l;
+      };
+      const creer = async (g) => {
+        const t = await tables();
+        const id = await t.gabarits.insertRow(versLigne(g));
+        oublier();
+        return { ...g, id };
+      };
+      const maj = async (id, champs) => {
+        const t = await tables();
+        if (String(id).startsWith("c:")) {
+          const g = (await lister()).find((x) => x.id === id);
+          if (g) await t.gabarits.insertRow(versLigne({ ...g, ...champs, origine: "commun", cree_le: /* @__PURE__ */ new Date() }));
+        } else {
+          await t.gabarits.updateRow(versLigne(champs), +id);
+          if (champs.statut === "actif") {
+            const r = await t.gabarits.getRow({ id: +id });
+            if (r) await publier(api, versGabarit(r), R2).catch(() => {
+            });
+          }
+        }
+        oublier();
+      };
+      return { lister, creer, maj };
+    };
+    var debutJour = () => {
+      const d = new Date((/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "Europe/Paris" }));
+      const p = /* @__PURE__ */ new Date();
+      p.setTime(p.getTime() - (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) * 1e3);
+      return p;
+    };
+    var appelsDuJour = async () => +(await db().query(`select count(*) n from "${tenant()}".ld_ia where quand >= $1`, [debutJour()])).rows[0].n;
+    var noter = async (a) => {
+      const t = await tables();
+      await t.ia.insertRow({ quand: /* @__PURE__ */ new Date(), ok: !!a.ok, ms: a.ms || null, nature: a.nature || null, source: a.source ? String(a.source).slice(0, 120) : null, erreur: a.erreur ? String(a.erreur).slice(0, 300) : null });
+    };
+    var optionsLecture = async (api) => {
+      await tables();
+      const R2 = await reglages();
+      const A = api.leads.apprentissage;
+      if (!A) return {};
+      const o = { gabarits: stockage(api, R2) };
+      if (R2.ia_actif && api.iaDepuisCoffre) {
+        o.ia = api.iaDepuisCoffre(R2.ia_fournisseur || "saltcorn", R2.ia_modele || "", "LEADS_IA_CLE", R2.ia_url || void 0);
+        const plafond = +R2.ia_plafond_jour || 200;
+        o.budget = async () => await appelsDuJour() < plafond;
+        o.noter = noter;
+      }
+      return o;
+    };
+    var importerAmbs = async (api, lignes) => {
+      const t = await tables();
+      const deja = new Set((await t.gabarits.getRows({})).map((g) => g.origine));
+      let n = 0;
+      for (const g of api.leads.apprentissage.depuisAmbs(lignes)) {
+        if (deja.has(g.origine)) continue;
+        await t.gabarits.insertRow(versLigne({ ...g, cree_le: /* @__PURE__ */ new Date(), active_le: /* @__PURE__ */ new Date() }));
+        n++;
+      }
+      oublier();
+      return n;
+    };
+    module2.exports = { optionsLecture, stockage, importerAmbs, appelsDuJour, noter, oublier, versGabarit, lireCommuns };
+  }
+});
+
+// src/dossier.js
 var require_dossier = __commonJS({
-  "../src/dossier.js"(exports2, module2) {
+  "src/dossier.js"(exports2, module2) {
     "use strict";
     var { tables, MAILS } = require_schema();
     var { charger } = require_conf();
     var { flowApi } = require_core();
     var fil = require_fil();
     var { avecCatalogue } = require_catalogue();
+    var G = require_gabarits();
     var courte = (v, n = 900) => String(v == null ? "" : v).slice(0, n);
     var sansCommentaire = (a) => a && a.donnees && a.donnees.comment ? { ...a, donnees: { ...a.donnees, comment: `(${a.donnees.comment.length} caract\xE8res)` } } : a;
     var versLigne = (d, mail = {}) => {
@@ -642,10 +810,11 @@ var require_dossier = __commonJS({
         traite_le: /* @__PURE__ */ new Date(),
         expediteur: courte(mail.expediteur, 300),
         objet: courte(mail.objet, 400),
-        portail: x.portail || "",
+        portail: x.portail === "inconnu" || !x.portail ? x.portail_nom || x.portail || "" : x.portail,
         nature: x.nature || "",
         statut: d.statut,
         role: d.role || "",
+        lu_par: (x.lu_par || []).join("+"),
         contact_nom: courte([c.prenom, c.nom].filter(Boolean).join(" ") || c.nom_complet, 200),
         contact_email: c.email || c.email_relais || "",
         contact_tel: c.telephone || "",
@@ -703,7 +872,8 @@ var require_dossier = __commonJS({
       const client = await avecCatalogue(api.crmDepuisCoffre(crm.type, crm.reglages, crm.prefixe, mode));
       const m = versMoteur(mail);
       return api.verrou.sous(cleVerrou(api, m, conf, mail.id), async () => {
-        const d = await api.leads.traiter(m, client, conf, { dossiers: { trouver: fil.trouver } });
+        const lecture = await G.optionsLecture(api).catch(() => ({}));
+        const d = await api.leads.traiter(m, client, conf, { dossiers: { trouver: fil.trouver }, ...lecture });
         d.execution = { ...await api.leads.executer(d, client, { mode }), mode };
         if (client.notees) d.execution.ecritures_notees = client.notees.map(sansCommentaire);
         const garder = d.dossier && !(d.statut === "a_trier" && !d.dossier.existant);
@@ -717,9 +887,9 @@ var require_dossier = __commonJS({
   }
 });
 
-// ../src/installer.js
+// src/installer.js
 var require_installer = __commonJS({
-  "../src/installer.js"(exports2, module2) {
+  "src/installer.js"(exports2, module2) {
     "use strict";
     var { tables, MAILS } = require_schema();
     var { flowApi } = require_core();
@@ -805,9 +975,9 @@ var require_installer = __commonJS({
   }
 });
 
-// ../src/pages/dossiers.js
+// src/pages/dossiers.js
 var require_dossiers = __commonJS({
-  "../src/pages/dossiers.js"(exports2, module2) {
+  "src/pages/dossiers.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, go, dateFr, flowApi } = require_core();
     var { tables } = require_schema();
@@ -845,7 +1015,7 @@ var require_dossiers = __commonJS({
       const nom = new Map((conf.routage && conf.routage.personnes || []).map((x) => [String(x.id), x.nom]));
       const qs = (o) => "?" + new URLSearchParams({ ...q, ...o }).toString();
       const html = `<form class="ld-filtres" method="get"><input class="form-control form-control-sm" name="q" value="${esc(q.q || "")}" placeholder="Nom, e-mail, r\xE9f\xE9rence\u2026">
-${U.coche("sans_reponse", q.sans_reponse === "1", "sans r\xE9ponse de l'\xE9quipe").replace('name="sans_reponse"', 'name="sans_reponse" value="1"')}<button class="btn btn-sm btn-primary">Filtrer</button> <span class="ld-mute">${total} dossier(s)</span></form>
+${U.coche("sans_reponse", q.sans_reponse === "1", "sans r\xE9ponse de l'\xE9quipe").replace('name="sans_reponse"', 'name="sans_reponse" value="1"')}<button class="btn btn-sm btn-primary">Filtrer</button> <span class="ld-mute">${total} conversation(s) \xB7 <span title="une conversation = un prospect \xD7 un bien : sa demande, ses relances et les r\xE9ponses de l'agence">un prospect \xD7 un bien</span></span></form>
 ${U.table(["Derni\xE8re activit\xE9", "Prospect", "Bien", "N\xE9gociateur", "Mails", "R\xE9ponse de l'\xE9quipe"], rows.map((r) => [
         `<a href="/leads/dossier/${r.id}">${esc(dateFr(r.derniere_activite))}</a>`,
         `${esc(r.nom || "")}<br><small class="ld-mute">${esc(r.email || r.relais || r.telephone || "")}</small>`,
@@ -853,15 +1023,15 @@ ${U.table(["Derni\xE8re activit\xE9", "Prospect", "Bien", "N\xE9gociateur", "Mai
         esc(nom.get(String(r.negociateur)) || r.negociateur || "\u2014"),
         esc(r.nb_mails || 1),
         r.reponse_le ? `${U.pill("r\xE9pondu", "ok")} <small class="ld-mute">en ${esc(duree(new Date(r.reponse_le) - new Date(r.premiere_demande)))}</small>` : U.pill("pas encore", Date.now() - new Date(r.premiere_demande) > 864e5 ? "ko" : "warn")
-      ]), "Aucun dossier.")}
+      ]), "Aucune conversation.")}
 <div class="ld-pages">${page > 1 ? `<a class="btn btn-sm btn-outline-secondary" href="${qs({ page: page - 1 })}">Pr\xE9c\xE9dents</a>` : ""}${page * 50 < total ? `<a class="btn btn-sm btn-outline-secondary" href="${qs({ page: page + 1 })}">Suivants</a>` : ""}</div>`;
-      U.page(req, res, "Dossiers", "dossiers", html);
+      U.page(req, res, "Conversations", "dossiers", html);
     };
     var fiche = async (req, res) => {
       if (!peutVoir2(req)) return refuse(res);
       const t = await tables();
       const d = await t.dossiers.getRow({ id: +req.params.id });
-      if (!d) return go(res, "/leads/dossiers", "Dossier introuvable", true);
+      if (!d) return go(res, "/leads/dossiers", "Conversation introuvable", true);
       const evts = await t.evenements.getRows({ dossier: d.id }, { orderBy: "quand" });
       const leads = await t.leads.getRows({ dossier_id: d.id }, { orderBy: "recu_le" });
       const api = flowApi();
@@ -873,14 +1043,14 @@ ${U.table(["Derni\xE8re activit\xE9", "Prospect", "Bien", "N\xE9gociateur", "Mai
       const html = `<div class="ld-grille ld-g2">
 ${U.carte("Conversation", fil || '<p class="ld-vide">Aucun message.</p>')}
 <div>
-${U.carte("Dossier", `<dl class="ld-kv"><dt>Prospect</dt><dd>${esc(d.nom || "\u2014")}</dd><dt>E-mail</dt><dd>${esc(d.email || "\u2014")}</dd><dt>Relais du portail</dt><dd>${esc(d.relais || "\u2014")}</dd><dt>T\xE9l\xE9phone</dt><dd>${esc(d.telephone || "\u2014")}</dd>
+${U.carte("Prospect et bien", `<dl class="ld-kv"><dt>Prospect</dt><dd>${esc(d.nom || "\u2014")}</dd><dt>E-mail</dt><dd>${esc(d.email || "\u2014")}</dd><dt>Relais du portail</dt><dd>${esc(d.relais || "\u2014")}</dd><dt>T\xE9l\xE9phone</dt><dd>${esc(d.telephone || "\u2014")}</dd>
 <dt>Bien</dt><dd>${esc(d.bien_ref || d.reference || "\u2014")} ${d.bien_crm ? `<span class="ld-mute">(id ${esc(d.bien_crm)})</span>` : ""}</dd><dt>N\xE9gociateur</dt><dd>${esc(d.negociateur || "\u2014")}</dd>
 <dt>Contact CRM</dt><dd>${esc(d.contact_crm || "\u2014 (mode ombre)")}</dd><dt>Projet de recherche</dt><dd>${esc(d.recherche_crm || "\u2014")}</dd><dt>Consentement</dt><dd>${d.consentement ? U.pill("pos\xE9", "ok") : U.pill("non", "mute")}</dd>
 <dt>1re demande</dt><dd>${esc(dateFr(d.premiere_demande))}</dd><dt>1re r\xE9ponse de l'\xE9quipe</dt><dd>${d.reponse_le ? esc(dateFr(d.reponse_le)) + " \xB7 " + esc(duree(new Date(d.reponse_le) - new Date(d.premiere_demande))) : U.pill("pas encore", "warn")}</dd></dl>`)}
-${U.carte("Mails du dossier", U.table(["Re\xE7u", "Nature", "Statut"], leads.map((l) => [`<a href="/leads/l/${l.id}">${esc(dateFr(l.recu_le))}</a>`, esc(l.nature), U.badge(l.decision || l.statut)])))}
+${U.carte("Mails de la conversation", U.table(["Re\xE7u", "Nature", "Statut"], leads.map((l) => [`<a href="/leads/l/${l.id}">${esc(dateFr(l.recu_le))}</a>`, esc(l.nature), U.badge(l.decision || l.statut)])))}
 ${U.carte("Commentaire \xE9crit dans le CRM (projet de recherche)", `<pre class="ld-pre">${esc(comment)}</pre><p class="ld-mute" style="margin:6px 0 0">Reconstruit \xE0 chaque mail \xE0 partir de toute la conversation ; rien n'est ajout\xE9 en double.</p>`)}
 </div></div>`;
-      U.page(req, res, "Dossier \xB7 " + (d.nom || d.email || d.id), "dossiers", html);
+      U.page(req, res, "Conversation \xB7 " + (d.nom || d.email || d.id), "dossiers", html);
     };
     var chiffres = async () => {
       const r = (await db().query(`select count(*) filter (where cree_le > now() - interval '7 days') nouveaux,
@@ -893,9 +1063,9 @@ ${U.carte("Commentaire \xE9crit dans le CRM (projet de recherche)", `<pre class=
   }
 });
 
-// ../src/pages/leads.js
+// src/pages/leads.js
 var require_leads = __commonJS({
-  "../src/pages/leads.js"(exports2, module2) {
+  "src/pages/leads.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, isAdmin, hidden, go, dateFr, flowApi } = require_core();
     var { tables, MAILS } = require_schema();
@@ -943,7 +1113,7 @@ var require_leads = __commonJS({
       }
       const html = `<div class="ld-kpis">
 ${U.kpi(p1, "pr\xEAts aujourd'hui", { ton: "ok", lien: "/leads/liste?statut=pret&periode=1" })}${U.kpi(v1, "\xE0 v\xE9rifier aujourd'hui", { ton: v1 ? "warn" : "", lien: "/leads/liste?statut=a_verifier&periode=1" })}${U.kpi(t1, "\xE0 trier aujourd'hui", { ton: "info", lien: "/leads/liste?statut=a_trier&periode=1" })}${U.kpi(i1, "non-leads \xE9cart\xE9s", { lien: "/leads/liste?statut=ignore&periode=1" })}
-${U.kpi(DC.nouveaux, "dossiers ouverts sur 7 jours", { lien: "/leads/dossiers" })}${U.kpi(require_dossiers().duree(DC.mediane_ms), "d\xE9lai de 1re r\xE9ponse (m\xE9diane, 30 j)", { ton: DC.mediane_ms != null && DC.mediane_ms > 864e5 ? "warn" : "ok" })}${U.kpi(DC.sans_reponse, "sans r\xE9ponse depuis plus de 24 h", { ton: DC.sans_reponse ? "ko" : "", lien: "/leads/dossiers?sans_reponse=1" })}
+${U.kpi(DC.nouveaux, "conversations ouvertes sur 7 jours", { lien: "/leads/dossiers" })}${U.kpi(require_dossiers().duree(DC.mediane_ms), "d\xE9lai de 1re r\xE9ponse (m\xE9diane, 30 j)", { ton: DC.mediane_ms != null && DC.mediane_ms > 864e5 ? "warn" : "ok" })}${U.kpi(DC.sans_reponse, "sans r\xE9ponse depuis plus de 24 h", { ton: DC.sans_reponse ? "ko" : "", lien: "/leads/dossiers?sans_reponse=1" })}
 ${U.kpi(p7, "pr\xEAts sur 7 jours", { lien: "/leads/liste?statut=pret&periode=7" })}${U.kpi(v7, "\xE0 v\xE9rifier sur 7 jours", { ton: v7 ? "warn" : "", lien: "/leads/liste?statut=a_verifier&periode=7" })}${U.kpi(t7, "\xE0 trier sur 7 jours", { lien: "/leads/liste?statut=a_trier&periode=7" })}${U.kpi(moy + " ms", "temps moyen de traitement")}</div>
 <div class="ld-grille ld-g2">
 ${U.carte("Par portail \xB7 7 jours", U.table(["Portail", "Leads", "Pr\xEAts", "\xC0 v\xE9rifier", "Taux"], parPortail.map((r) => [`<a href="/leads/liste?portail=${encodeURIComponent(r.p)}&periode=7">${esc(r.p)}</a>`, r.n, r.ok, r.v ? `<span class="ld-badge warn">${r.v}</span>` : 0, Math.round(100 * r.ok / Math.max(1, r.n)) + " %"])))}
@@ -1024,12 +1194,18 @@ ${U.table(["Re\xE7u", "Portail", "Contact", "R\xE9f\xE9rence \u2192 bien", "Agen
       const D2 = d.destinataires || { liste: [], trace: [] };
       const ex = d.execution && d.execution.resultats || [];
       const html = `<div class="ld-actions" style="margin:-4px 0 12px">${U.badge(l.decision || l.statut)} ${U.pill(l.portail || "portail inconnu")} ${U.pill(l.nature)} ${l.mode === "reel" ? '<span class="ld-reel">R\xC9EL</span>' : '<span class="ld-ombre">OMBRE</span>'}
-${l.dossier_id ? `<a class="btn btn-sm btn-outline-secondary" href="/leads/dossier/${l.dossier_id}"><i class="fas fa-comments"></i> Dossier et conversation</a>` : ""}
+${l.dossier_id ? `<a class="btn btn-sm btn-outline-secondary" href="/leads/dossier/${l.dossier_id}"><i class="fas fa-comments"></i> Conversation</a>` : ""}
 <form method="post" action="/leads/l/${l.id}/retraiter" class="ld-inline">${hidden(req)}<button class="btn btn-sm btn-outline-primary"><i class="fas fa-redo"></i> Retraiter (ombre)</button></form>
 <form method="post" action="/leads/l/${l.id}/decision" class="ld-inline">${hidden(req)}${U.select("decision", [["", "D\xE9cision\u2026"], ["traite", "Trait\xE9 \xE0 la main"], ["ignore", "Pas un lead"], ["a_verifier", "\xC0 revoir"]], "")}<button class="btn btn-sm btn-outline-secondary">Enregistrer</button></form></div>
 ${l.motifs ? `<div class="ld-flash ko">${esc(l.motifs)}</div>` : ""}${l.alertes ? `<div class="ld-flash" style="background:rgba(161,92,0,.1)">${esc(l.alertes)}</div>` : ""}
 <div class="ld-grille ld-g2">
-${U.carte("Ce qui a \xE9t\xE9 lu (sans IA)", U.table(["Champ", "Valeur", "Source"], champs))}
+${U.carte("Ce qui a \xE9t\xE9 lu", (() => {
+        const x2 = d.extraction || {}, lu = x2.lu_par || ["regles"], le = x2.lecture || {};
+        const qui = lu.includes("ia") ? lu.includes("gabarit") ? "r\xE8gles + gabarit appris + IA" : "r\xE8gles + IA" : lu.includes("gabarit") ? "r\xE8gles + gabarit appris" : "r\xE8gles";
+        const ia = le.ia && le.ia.statut === "ok" ? `<br><small class="ld-mute">IA : ${esc(le.ia.nature)} (confiance ${esc(le.ia.confiance)})${le.ia.justification ? " \u2014 " + esc(le.ia.justification) : ""}${(le.ia.rejets || []).length ? " \xB7 refus\xE9 car absent du mail : " + esc(le.ia.rejets.join(", ")) : ""}</small>` : le.ia ? `<br><small class="ld-mute">IA : ${esc(le.ia.statut)}</small>` : "";
+        const ap = le.apprentissage && le.apprentissage.fait !== "rien" ? `<br><small class="ld-mute">gabarit ${esc(le.apprentissage.fait)} (${esc(le.apprentissage.observations)} observation(s))</small>` : "";
+        return `<p style="margin:0 0 8px">Lu par : <b>${esc(qui)}</b>${ia}${ap}</p>` + U.table(["Champ", "Valeur", "Source"], champs);
+      })())}
 <div>
 ${U.carte("Bien", `<dl class="ld-kv"><dt>R\xE9sultat</dt><dd>${d.bien ? `<b>${esc(d.bien.reference)}</b> (id ${esc(d.bien.id)}) \xB7 ${esc([d.bien.type, d.bien.pieces && d.bien.pieces + " p.", d.bien.surface && d.bien.surface + " m\xB2", d.bien.prix && d.bien.prix.toLocaleString("fr-FR") + " \u20AC", d.bien.ville].filter(Boolean).join(" \xB7 "))}` : `<span class="ld-badge warn">non trouv\xE9</span> ${esc(R2.motif || "")}`}</dd><dt>M\xE9thode</dt><dd>${esc(R2.methode || "\u2014")} ${R2.confiance ? U.pill("confiance " + R2.confiance) : ""}</dd><dt>Agence</dt><dd>${esc(d.agence ? `${d.agence.nom} (par ${d.agence.par})` : "\u2014")}</dd><dt>N\xE9gociateur</dt><dd>${nego ? `<a href="/leads/personne/${nego.id}">${esc(nego.nom)}</a> <span class="ld-mute">(${esc(d.negociateur)})</span>` : esc(d.negociateur || "\u2014")}</dd><dt>Origine</dt><dd>${esc(d.origine ? `${d.origine.libelle || d.origine.code} ${d.origine.id ? "(" + d.origine.id + ")" : "(non reli\xE9e au CRM)"}` : "\u2014")}</dd></dl>`)}
 ${U.carte("\xC9tapes de recherche du bien", U.table(["\xC9tape", "Requ\xEAte", "Trouv\xE9s", "V\xE9rification"], etapes, "Aucune recherche (pas un lead ou pas de r\xE9f\xE9rence)."))}
@@ -1064,9 +1240,9 @@ ${l.ancien_statut ? U.carte("Ancien syst\xE8me (comparaison)", `<dl class="ld-kv
   }
 });
 
-// ../src/pages/equipe.js
+// src/pages/equipe.js
 var require_equipe = __commonJS({
-  "../src/pages/equipe.js"(exports2, module2) {
+  "src/pages/equipe.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, hidden, go, jour, flowApi } = require_core();
     var { tables } = require_schema();
@@ -1234,9 +1410,9 @@ ${U.carte("Nouvelle absence", formAbsence(req, P, null, "/leads/absences"))}`;
   }
 });
 
-// ../src/pages/demandes.js
+// src/pages/demandes.js
 var require_demandes = __commonJS({
-  "../src/pages/demandes.js"(exports2, module2) {
+  "src/pages/demandes.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, isAdmin, hidden, go, dateFr } = require_core();
     var { tables, STATUTS_DEMANDE, URGENCES } = require_schema();
@@ -1302,9 +1478,9 @@ ${U.carte("Suivi", U.table(["Date", "\xC9tape", "Note", "Par"], E2.map((e) => [e
   }
 });
 
-// ../src/pages/reglages.js
+// src/pages/reglages.js
 var require_reglages = __commonJS({
-  "../src/pages/reglages.js"(exports2, module2) {
+  "src/pages/reglages.js"(exports2, module2) {
     "use strict";
     var { esc, isAdmin, hidden, go, flowApi } = require_core();
     var { tables, MAILS } = require_schema();
@@ -1563,9 +1739,9 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
   }
 });
 
-// ../src/pages/chaine.js
+// src/pages/chaine.js
 var require_chaine = __commonJS({
-  "../src/pages/chaine.js"(exports2, module2) {
+  "src/pages/chaine.js"(exports2, module2) {
     "use strict";
     var { esc, isAdmin, hidden, go, dateFr, flowApi } = require_core();
     var { tables } = require_schema();
@@ -1620,13 +1796,13 @@ ${U.carte("Catalogue local des biens", `<p style="margin:0 0 8px">${nbBiens} bie
 <p class="ld-mute ld-mono" style="margin:0">POST /hooks { "url": "${esc(url)}", "origines": ["PRODUCT_CREATE","PRODUCT_UPDATE","PRODUCT_DELETE"], "headers": { "X-Api-Key": "&lt;la cl\xE9&gt;" } }</p>
 <form method="post" action="/leads/chaine/webhook" class="ld-inline" style="margin-top:8px">${hidden(req)}${U.input("cle", "", { type: "password", placeholder: "cl\xE9 du webhook (rang\xE9e chiffr\xE9e)" })}<button class="btn btn-sm btn-outline-secondary">Ranger la cl\xE9</button></form>`)}
 
-${U.carte("Portails d\xE9clar\xE9s (sans code)", `${U.table(["Nom", "Domaines", "Objets qui sont des leads", "R\xE9f\xE9rence", ""], portails.map((p) => [
+${U.carte("Portails d\xE9clar\xE9s \xE0 la main (facultatif)", `<p class="ld-mute" style="margin:0 0 8px">Pas n\xE9cessaire : un nouveau portail est lu par l'IA puis appris tout seul (onglet \xAB Lecture des mails \xBB). \xC0 utiliser seulement pour forcer une r\xE8gle.</p>${U.table(["Nom", "Domaines", "Objets qui sont des leads", "R\xE9f\xE9rence", ""], portails.map((p) => [
         esc(p.nom),
         `<span class="ld-mono">${esc(p.domaines)}</span>`,
         `<span class="ld-mono">${esc(String(p.objets_lead || "").split("\n").join(" \xB7 "))}</span>`,
         `<span class="ld-mono">${esc(p.reference || "")}</span>`,
         `<form method="post" action="/leads/portails/${p.id}/supprimer" class="ld-inline">${hidden(req)}<button class="btn btn-sm btn-link">retirer</button></form>`
-      ]), "Aucun portail d\xE9clar\xE9 : ceux du code suffisent pour l'instant.")}
+      ]), "Aucun : les portails du code et les gabarits appris suffisent.")}
 <form method="post" action="/leads/portails" style="margin-top:10px">${hidden(req)}<div class="ld-form">
 ${U.champ("Nom", U.input("nom", req.query.domaine || "", { required: true }))}
 ${U.champ("Domaines de l'exp\xE9diteur", U.input("domaines", req.query.domaine || "", { placeholder: "exemple-immo.fr", required: true }), "s\xE9par\xE9s par des virgules")}
@@ -1720,9 +1896,126 @@ ${U.carte("Nouveaux exp\xE9diteurs \xB7 30 jours", U.table(["Domaine", "Mails", 
   }
 });
 
-// ../src/blocks.js
+// src/pages/lecture.js
+var require_lecture = __commonJS({
+  "src/pages/lecture.js"(exports2, module2) {
+    "use strict";
+    var { esc, peutVoir: peutVoir2, isAdmin, hidden, go, dateFr, flowApi } = require_core();
+    var { tables } = require_schema();
+    var { reglages: lireReglages } = require_conf();
+    var G = require_gabarits();
+    var U = require_ui();
+    var refuse = (res) => res.status(403).send("Acc\xE8s r\xE9serv\xE9 \xE0 l'\xE9quipe");
+    var db = () => require("@saltcorn/data/db");
+    var S = () => db().getTenantSchema();
+    var NOMS = { nom_complet: "nom complet", telephone: "t\xE9l\xE9phone", reference: "r\xE9f\xE9rence", type_bien: "type", nb_pieces: "pi\xE8ces", code_postal: "CP" };
+    var STATUT = { actif: ["actif", "ok"], candidat: ["en apprentissage", "info"], suspendu: ["suspendu", "warn"], quarantaine: ["doublon", "mute"] };
+    var page = async (req, res) => {
+      if (!peutVoir2(req)) return refuse(res);
+      const t = await tables();
+      const R2 = await lireReglages();
+      const api = flowApi();
+      const q = await db().query(`select coalesce(nullif(lu_par,''),'regles') lu, count(*) n from "${S()}".ld_leads where traite_le > now() - interval '30 days' and nature in ('lead','relance','recherche','estimation','direct','inconnu','reponse_campagne') group by 1`).catch(() => ({ rows: [] }));
+      const par = Object.fromEntries(q.rows.map((r) => [r.lu, +r.n]));
+      const total = Object.values(par).reduce((a, b) => a + b, 0) || 0;
+      const pc = (n) => total ? Math.round(100 * n / total) + " %" : "\u2014";
+      const regles = par.regles || 0, gab = par["regles+gabarit"] || 0, ia = (par["regles+ia"] || 0) + (par["regles+gabarit+ia"] || 0);
+      const jour = await G.appelsDuJour().catch(() => 0);
+      const erreurs = +(await db().query(`select count(*) n from "${S()}".ld_ia where ok is not true and quand > now() - interval '1 day'`).catch(() => ({ rows: [{ n: 0 }] }))).rows[0].n;
+      const gabs = (await t.gabarits.getRows({}, { orderBy: "id" })).map(G.versGabarit);
+      const compte = (s) => gabs.filter((g) => g.statut === s).length;
+      const communs = R2.gabarits_partages ? (await G.lireCommuns().catch(() => [])).length : 0;
+      const cle = api ? await api.hasSecret("LEADS_IA_CLE") : false;
+      const admin = isAdmin(req);
+      const ordre = { candidat: 0, suspendu: 1, actif: 2, quarantaine: 3 };
+      const lignes = gabs.slice().sort((a, b) => (ordre[a.statut] ?? 9) - (ordre[b.statut] ?? 9) || String(a.source).localeCompare(String(b.source))).slice(0, 400).map((g) => {
+        const s = g.signature || {};
+        const [l, c] = STATUT[g.statut] || [g.statut || "\u2014", "mute"];
+        const act = !admin ? "" : `<form method="post" action="/leads/gabarits/${g.id}/statut" class="ld-inline">${hidden(req)}${g.statut === "actif" ? '<button class="btn btn-sm btn-link" name="statut" value="suspendu">suspendre</button>' : '<button class="btn btn-sm btn-link" name="statut" value="actif">activer</button>'}</form>`;
+        return [
+          `<b>${esc(g.source)}</b><br><small class="ld-mute">${esc(g.nature || "")}</small>`,
+          `<small>${esc(String(s.expediteur || "").replace(/\\/g, "").replace(/\$$/, ""))}</small>${(s.ancres || []).map((a) => `<br><small class="ld-mute">\xAB ${esc(a)} \xBB</small>`).join("")}`,
+          `<details><summary>${esc((g.champs || []).map((c2) => NOMS[c2.nom] || c2.nom).join(", ") || "\u2014")}</summary><pre class="ld-pre">${esc((g.champs || []).map((c2) => `${c2.nom} : /${c2.motif}/`).join("\n"))}</pre></details>`,
+          U.pill(l, c),
+          esc(g.nb_observations || 0),
+          esc(g.nb_utilisations || 0),
+          g.nb_echecs ? U.pill(g.nb_echecs, "warn") : "0",
+          `<small class="ld-mute">${esc(String(g.origine || "").startsWith("ambs") ? "ancien AMBS" : g.origine === "commun" ? "biblioth\xE8que commune" : "appris ici")}<br>${esc(dateFr(g.vu_le || g.cree_le))}</small>`,
+          act
+        ];
+      });
+      const html = `${U.carte("Comment un mail est lu", `<ol class="ld-trace">
+<li><b>R\xE8gles</b> : pour les portails connus (SeLoger, Leboncoin, Green-Acres\u2026), la lecture est \xE9crite dans le moteur. Gratuit, instantan\xE9.</li>
+<li><b>Gabarits appris</b> : pour un portail ou une mise en page nouvelle, la \xAB forme \xBB du mail a \xE9t\xE9 apprise. Gratuit, instantan\xE9.</li>
+<li><b>IA</b> : seulement si le mail reste inconnu ou incomplet. Chaque valeur rendue par l'IA est rev\xE9rifi\xE9e dans le mail (rien d'invent\xE9), et sa lecture sert \xE0 apprendre un gabarit : au 3e mail de la m\xEAme forme, l'IA n'est plus appel\xE9e.</li></ol>
+<p class="ld-mute" style="margin:6px 0 0">Si un portail change sa mise en page, le gabarit \xE9choue, l'IA reprend et un nouveau gabarit s'apprend. Rien n'est \xE0 d\xE9clarer \xE0 la main.</p>`)}
+<div class="ld-kpis">${U.kpi(pc(regles), "lus par les r\xE8gles (30 j)", { detail: regles + " mail(s)" })}${U.kpi(pc(gab), "lus par un gabarit appris", { ton: "ok", detail: gab + " mail(s)" })}${U.kpi(pc(ia), "compl\xE9t\xE9s par l'IA", { ton: "info", detail: ia + " mail(s)" })}
+${U.kpi(`${jour} / ${+R2.ia_plafond_jour || 200}`, "appels IA aujourd'hui / plafond", { ton: R2.ia_actif ? "" : "warn", detail: R2.ia_actif ? erreurs ? erreurs + " erreur(s) sur 24 h" : "" : "IA coup\xE9e" })}
+${U.kpi(compte("actif"), "gabarits actifs", { ton: "ok", detail: communs ? `+ ${communs} dans la biblioth\xE8que commune` : "" })}${U.kpi(compte("candidat"), "en apprentissage")}${U.kpi(compte("suspendu"), "suspendus", { ton: compte("suspendu") ? "warn" : "" })}</div>
+${admin ? `<form method="post" action="/leads/lecture">${hidden(req)}${U.carte("IA", `<div class="ld-form">
+${U.champ("", U.coche("ia_actif", !!R2.ia_actif, "Utiliser l'IA pour les mails inconnus ou incomplets"))}
+${U.champ("Fournisseur", U.select("ia_fournisseur", [["saltcorn", "plugin \xAB large-language-model \xBB de Saltcorn (d\xE9j\xE0 r\xE9gl\xE9)"], ["openai", "OpenAI"], ["anthropic", "Anthropic"]], R2.ia_fournisseur || "saltcorn"))}
+${U.champ("Mod\xE8le", U.input("ia_modele", R2.ia_modele || "", { placeholder: "vide = mod\xE8le par d\xE9faut" }), "ignor\xE9 avec le plugin Saltcorn (c'est son r\xE9glage qui compte)")}
+${U.champ("Adresse de l'API", U.input("ia_url", R2.ia_url || "", { placeholder: "vide = adresse officielle" }), "pour une API compatible OpenAI (Mistral, Azure, serveur interne\u2026)")}
+${U.champ("Plafond d'appels par jour", U.input("ia_plafond_jour", R2.ia_plafond_jour || 200, { type: "number" }), "au-del\xE0, les mails restent \xAB \xE0 trier \xBB jusqu'au lendemain")}
+${U.champ(`Cl\xE9 d'API ${cle ? U.pill("rang\xE9e", "ok") : U.pill("absente", "mute")}`, U.input("ia_cle", "", { type: "password", placeholder: "laisser vide pour garder" }), "rang\xE9e chiffr\xE9e dans le coffre (LEADS_IA_CLE), jamais r\xE9affich\xE9e ; inutile avec le plugin Saltcorn")}
+${U.champ("", U.coche("gabarits_partages", !!R2.gabarits_partages, "Partager les gabarits des portails avec les autres clients (biblioth\xE8que commune)") + '<small class="ld-mute">seule la forme du mail est partag\xE9e (libell\xE9s, expressions) ; aucune donn\xE9e de prospect</small>')}
+</div><div class="ld-actions"><button class="btn btn-sm btn-primary">Enregistrer</button></div>`)}</form>` : ""}
+${U.carte("Gabarits appris", U.table(["Portail", "Reconnu par", "Champs lus", "Statut", "Observations", "Utilisations", "\xC9checs", "Origine", ""], lignes, "Aucun gabarit pour l'instant : ils s'apprennent au fil des mails."))}
+${admin ? U.carte("Reprendre les gabarits de l'ancien AMBS", `<p>Fichier <code>tables/gabarit_version.json</code> d'une sauvegarde : seuls les gabarits actifs sont repris ; ils ne servent que l\xE0 o\xF9 les r\xE8gles ne suffisent pas.</p>
+<form method="post" action="/leads/gabarits/import" enctype="multipart/form-data">${hidden(req)}<input class="form-control form-control-sm" type="file" name="fichiers" accept=".json" required><div class="ld-actions"><button class="btn btn-sm btn-outline-primary">Importer</button></div></form>`) : ""}`;
+      U.page(req, res, "Lecture des mails", "lecture", html);
+    };
+    var enregistrer = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const b = req.body || {};
+      const t = await tables();
+      const R2 = (await t.reglages.getRows({}, { orderBy: "id", limit: 1 }))[0];
+      const v = {
+        ia_actif: b.ia_actif === "on",
+        ia_fournisseur: ["saltcorn", "openai", "anthropic"].includes(b.ia_fournisseur) ? b.ia_fournisseur : "saltcorn",
+        ia_modele: String(b.ia_modele || "").trim().slice(0, 80),
+        ia_url: /^https:\/\/[\w.-]+(:\d+)?(\/[\w./-]*)?$/.test(String(b.ia_url || "").trim()) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(String(b.ia_url || "").trim()) ? String(b.ia_url).trim().replace(/\/$/, "") : "",
+        ia_plafond_jour: Math.max(0, Math.min(1e5, +b.ia_plafond_jour || 200)),
+        gabarits_partages: b.gabarits_partages === "on",
+        maj_le: /* @__PURE__ */ new Date()
+      };
+      if (R2) await t.reglages.updateRow(v, R2.id);
+      else await t.reglages.insertRow(v);
+      if (String(b.ia_cle || "").trim()) await flowApi().writeSecret("LEADS_IA_CLE", String(b.ia_cle).trim(), "dysizz-leads : cl\xE9 d'API de l'IA");
+      G.oublier();
+      go(res, "/leads/lecture", "R\xE9glages de l'IA enregistr\xE9s");
+    };
+    var statut = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const t = await tables();
+      const s = (req.body || {}).statut === "actif" ? "actif" : "suspendu";
+      await t.gabarits.updateRow(s === "actif" ? { statut: "actif", nb_echecs: 0, active_le: /* @__PURE__ */ new Date() } : { statut: "suspendu", suspendu_le: /* @__PURE__ */ new Date() }, +req.params.id);
+      G.oublier();
+      go(res, "/leads/lecture", s === "actif" ? "Gabarit activ\xE9" : "Gabarit suspendu");
+    };
+    var importer = async (req, res) => {
+      if (!isAdmin(req)) return refuse(res);
+      const f = [].concat(req.files && req.files.fichiers || [])[0];
+      if (!f) return go(res, "/leads/lecture", "Aucun fichier", true);
+      let lignes;
+      try {
+        const buf = f.data && f.data.length ? f.data : require("fs").readFileSync(f.tempFilePath);
+        lignes = JSON.parse(buf.toString("utf8"));
+      } catch (e) {
+        return go(res, "/leads/lecture", "Fichier illisible", true);
+      }
+      if (!Array.isArray(lignes)) return go(res, "/leads/lecture", "Ce n'est pas gabarit_version.json", true);
+      const n = await G.importerAmbs(flowApi(), lignes);
+      go(res, "/leads/lecture", `${n} gabarit(s) repris de l'ancien AMBS`);
+    };
+    module2.exports = { page, enregistrer, statut, importer };
+  }
+});
+
+// src/blocks.js
 var require_blocks = __commonJS({
-  "../src/blocks.js"(exports2, module2) {
+  "src/blocks.js"(exports2, module2) {
     "use strict";
     var { charger } = require_conf();
     var { enregistrer, traiterMail } = require_dossier();
@@ -1767,9 +2060,9 @@ var require_blocks = __commonJS({
   }
 });
 
-// ../src/taches.js
+// src/taches.js
 var require_taches = __commonJS({
-  "../src/taches.js"(exports2, module2) {
+  "src/taches.js"(exports2, module2) {
     "use strict";
     var cluster = require("cluster");
     var G = globalThis[Symbol.for("dysizz-leads.taches")] || (globalThis[Symbol.for("dysizz-leads.taches")] = { minuteurs: /* @__PURE__ */ new Map() });
@@ -1820,6 +2113,20 @@ var require_taches = __commonJS({
         } catch (e) {
           log("reprise : " + e.message);
         }
+        if (R2.ia_actif) try {
+          const db = require("@saltcorn/data/db"), S2 = db.getTenantSchema();
+          const ids = (await db.query(`select mail_id from "${S2}".ld_leads where alertes like '%plafond du jour%' and traite_le < date_trunc('day', now() at time zone 'Europe/Paris') at time zone 'Europe/Paris' and traite_le > now() - interval '3 days' and mail_id is not null order by traite_le limit 50`)).rows.map((r) => r.mail_id);
+          for (const id of ids) {
+            try {
+              await require_dossier().traiterMail(id);
+            } catch (e) {
+              log(`relecture IA du mail ${id} : ${e.message}`);
+            }
+          }
+          await db.query(`delete from "${S2}".ld_ia where quand < now() - interval '90 days'`);
+        } catch (e) {
+          log("relecture IA : " + e.message);
+        }
         const j = +R2.retention_jours || 0;
         if (j > 0) {
           const db = require("@saltcorn/data/db");
@@ -1844,7 +2151,7 @@ var require_taches = __commonJS({
   }
 });
 
-// ../src/index.js
+// src/index.js
 var { PLUGIN, VERSION, peutVoir } = require_core();
 var { CSS } = require_ui();
 var L = require_leads();
@@ -1853,6 +2160,7 @@ var D = require_demandes();
 var R = require_reglages();
 var DO = require_dossiers();
 var CH = require_chaine();
+var LE = require_lecture();
 var asset = (req, res) => {
   if (req.params.file !== "ld.css") return res.status(404).send("");
   res.setHeader("Content-Type", "text/css; charset=utf-8");
@@ -1894,6 +2202,10 @@ module.exports = {
     { url: "/leads/l/:id/decision", method: "post", callback: garde(L.decisionPost) },
     { url: "/leads/dossiers", method: "get", callback: garde(DO.liste) },
     { url: "/leads/dossier/:id", method: "get", callback: garde(DO.fiche) },
+    { url: "/leads/lecture", method: "get", callback: garde(LE.page) },
+    { url: "/leads/lecture", method: "post", callback: garde(LE.enregistrer) },
+    { url: "/leads/gabarits/import", method: "post", callback: garde(LE.importer) },
+    { url: "/leads/gabarits/:id/statut", method: "post", callback: garde(LE.statut) },
     { url: "/leads/chaine", method: "get", callback: garde(CH.page) },
     { url: "/leads/chaine", method: "post", callback: garde(CH.enregistrer) },
     { url: "/leads/chaine/webhook", method: "post", callback: garde(CH.webhookCle) },

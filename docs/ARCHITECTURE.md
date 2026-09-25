@@ -19,7 +19,7 @@ Ce document dit comment la plateforme est construite et pourquoi. Il part de ce 
 
 1. **Chaque étape est une fonction pure** : elle reçoit des données, rend une décision et ses preuves. Les écritures (CRM, mails, tables) sont faites à part, par un exécuteur qui sait rejouer sans doublon.
 2. **Rien n'est deviné sans preuve.** Chaque valeur dit d'où elle vient (fiche, portail, citation, catalogue). Un doute part « à vérifier » avec la raison ; il n'est jamais tranché au hasard.
-3. **Les portails sont des données.** Un nouveau portail s'ajoute depuis l'écran Réglages (domaine, objets qui sont des leads, libellés en plus), sans toucher au code. Le code ne sert qu'aux mises en page vraiment particulières.
+3. **Un nouveau portail s'apprend tout seul.** Règles pour les portails connus, gabarits appris pour le reste, IA en dernier recours ; la lecture de l'IA devient un gabarit (même boucle que l'ancien AMBS). La déclaration à la main reste possible mais n'est jamais nécessaire.
 4. **Chaque client choisit ses étapes.** Lecture seule, lecture + CRM, tout avec envoi : ce sont des interrupteurs, pas des versions différentes.
 5. **Le CRM est derrière un contrat.** Immofacile, Salesforce, ou un autre demain : même interface, et chaque adaptateur dit ce qu'il sait faire (capacités).
 6. **Idempotence partout.** Le même mail rejoué dix fois donne un seul dossier, un seul contact, un seul projet, un seul envoi.
@@ -87,7 +87,12 @@ Selon la nature :
 - **Normalisation** avant lecture : fins de ligne, espaces insécables, libellés coupés sur deux lignes (« Ref. de / l'annonce : »), HTML → texte, citations séparées.
 - **Lecture par libellés** dans un dictionnaire unique (FR / EN / NL / ES…), valeur sur la même ligne ou la suivante : un champ déplacé ou un saut de ligne en plus ne casse rien.
 - **Champs manquants** : jamais bloquants à la lecture ; c'est l'étape d'après qui décide (pas de bien → « à vérifier » avec la raison).
-- **Portail inconnu** : si la fiche ressemble à un lead (contact + référence ou bien), le mail est traité comme lead « portail inconnu » et apparaît dans Réglages → « Nouveaux expéditeurs » pour être déclaré en un clic.
+- **Portail inconnu ou mise en page nouvelle** : lecture en trois étages (`lecture.js` dans dysizz-flow).
+  1. Règles des portails connus.
+  2. Gabarits appris (`ld_gabarits`) : signature = domaine de l'expéditeur + phrase stable ; motifs par champ.
+  3. IA si le mail reste inconnu, ou s'il manque le moyen de joindre le prospect, son nom ou la référence (portail non reconnu) ; pour un portail connu, seulement si les coordonnées manquent (sa mise en page a sans doute changé).
+  L'IA propose des motifs ; chaque motif est rejoué et doit retrouver la valeur lue, sans contenir aucune donnée du mail. Validé 2 fois dans une forme vue 3 fois → gabarit actif (règle d'AMBS, qui a fait passer l'IA seule de 19 % à 6 % des leads en six semaines). Trois échecs de suite → suspendu, l'IA réapprend. Chaque valeur de l'IA doit se retrouver dans le mail. Plafond d'appels par jour et par client (`ld_ia`).
+- **Bibliothèque commune** (facultative) : un gabarit de portail activé chez un client peut servir aux autres (`public.dzl_gabarits_communs`) ; seule la forme est partagée, jamais une donnée de prospect ; un client qui voit un gabarit commun échouer en garde une copie locale suspendue.
 - **Tests de mutation** : chaque mail de test est cassé exprès (sauts de ligne, retours chariot, texte recoupé à 40 colonnes, espaces insécables, champ retiré, majuscules, HTML seul) et le résultat doit rester le même.
 - **Non-régression sur corpus réel** : `tools/corpus.cjs` rejoue un corpus privé (jamais dans le dépôt) et compare aux chiffres de référence ; la CI le lance quand le corpus est fourni en secret.
 
@@ -110,6 +115,7 @@ Selon la nature :
 
 - Secrets uniquement dans le coffre chiffré de dysizz-flow ou en variables d'environnement ; jamais en clair dans une table.
 - Mode ombre : écritures bloquées au niveau HTTP (liste blanche des lectures).
+- IA : le texte du mail part chez le fournisseur choisi par le client (données personnelles du prospect). À couvrir par un contrat de sous-traitance (RGPD) ou un fournisseur hébergé en Europe / interne (adresse d'API compatible OpenAI). Seuls les mails que les règles et les gabarits n'ont pas su lire sont envoyés. Le prompt dit que le mail est une donnée ; la réponse ne peut rien déclencher, elle ne fait que remplir des champs revérifiés dans le mail.
 - HTML des mails jamais affiché tel quel : nettoyé (pas de script, pas d'images distantes par défaut).
 - Rétention réglable : le corps des mails est effacé après N jours (l'empreinte et la preuve de consentement restent).
 - Journal de qui a fait quoi (décisions manuelles, passage en réel).
