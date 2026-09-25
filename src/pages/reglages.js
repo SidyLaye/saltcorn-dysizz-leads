@@ -29,10 +29,11 @@ ${U.champ("CRM du client", U.select("crm", [["immofacile", "Immofacile (API V2)"
 ${U.champ("Immofacile · site_id", U.input("if_site_id", C.site_id || ""))}${U.champ("Immofacile · adresse de l'API", U.input("if_base", C.base || "https://v2.immo-facile.com/api"))}
 ${U.champ(`Immofacile · identifiants (Basic) ${await a(pre + "_BASIC")}`, U.input("s_basic", "", { type: "password", placeholder: "laisser vide pour garder" }), "rangé chiffré dans le coffre, jamais réaffiché")}
 ${U.champ("Immofacile · groupe « Demandeur » (id)", U.input("if_groupe", C.groupe_demandeur || ""))}
+${U.champ("Immofacile · type d'action pour le message du prospect (id)", U.input("if_action", C.action_lead || ""), "facultatif : le message est noté dans l'historique du contact (GET /actions/types)")}
 ${U.champ("Salesforce · domaine", U.input("sf_domaine", C.domaine || "", { placeholder: "https://monentreprise.my.salesforce.com" }))}${U.champ("Salesforce · objet contact", U.select("sf_objet", ["Lead", "Contact"], (C.contact || {}).objet || "Lead"))}
 ${U.champ(`Salesforce · client_id ${await a(pre + "_CLIENT_ID")}`, U.input("s_client_id", "", { type: "password" }))}${U.champ(`Salesforce · client_secret ${await a(pre + "_CLIENT_SECRET")}`, U.input("s_client_secret", "", { type: "password" }))}
 ${U.champ(`Salesforce · refresh_token (facultatif) ${await a(pre + "_REFRESH_TOKEN")}`, U.input("s_refresh_token", "", { type: "password" }))}
-${U.champ("Réglages avancés (JSON)", U.zone("crm_avance", JSON.stringify(Object.fromEntries(Object.entries(C).filter(([k]) => !["site_id", "base", "groupe_demandeur", "domaine"].includes(k))), null, 1), 4), "ex. correspondance des champs Salesforce, noms des champs du consentement")}
+${U.champ("Réglages avancés (JSON)", U.zone("crm_avance", JSON.stringify(Object.fromEntries(Object.entries(C).filter(([k]) => !["site_id", "base", "groupe_demandeur", "action_lead", "domaine"].includes(k))), null, 1), 4), "ex. correspondance des champs Salesforce, noms des champs du consentement")}
 </div>`)}
 ${U.carte("Mode et envoi", `<div class="ld-form">
 ${U.champ("Mode", U.select("mode", [["ombre", "OMBRE — le CRM est seulement lu, les écritures sont notées"], ["reel", "RÉEL — crée / complète les contacts, lie les biens, pose le consentement"]], R.mode))}
@@ -74,7 +75,7 @@ const enregistrer = async (req, res) => {
   try { avance = b.crm_avance ? JSON.parse(b.crm_avance) : {}; } catch (e) { return go(res, "/leads/reglages", "Réglages avancés : JSON invalide", true); }
   try { if (b.origines_portail) JSON.parse(b.origines_portail); } catch (e) { return go(res, "/leads/reglages", "Portail → origine : JSON invalide", true); }
   const crm = b.crm === "salesforce" ? "salesforce" : "immofacile";
-  const C = { ...avance, ...(crm === "immofacile" ? { site_id: String(b.if_site_id || "").trim(), base: String(b.if_base || "").trim() || undefined, groupe_demandeur: String(b.if_groupe || "").trim() || undefined } : { domaine: String(b.sf_domaine || "").trim(), contact: { ...(avance.contact || {}), objet: b.sf_objet === "Contact" ? "Contact" : "Lead" } }) };
+  const C = { ...avance, ...(crm === "immofacile" ? { site_id: String(b.if_site_id || "").trim(), base: String(b.if_base || "").trim() || undefined, groupe_demandeur: String(b.if_groupe || "").trim() || undefined, action_lead: String(b.if_action || "").trim() || undefined } : { domaine: String(b.sf_domaine || "").trim(), contact: { ...(avance.contact || {}), objet: b.sf_objet === "Contact" ? "Contact" : "Lead" } }) };
   let mode = b.mode === "reel" ? "reel" : "ombre";
   let note = "";
   if (mode === "reel" && R.mode !== "reel" && String(b.confirmer || "").trim().toUpperCase() !== "REEL") { mode = "ombre"; note = " — mode réel NON activé (tape REEL pour confirmer)"; }

@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 1.0.1
+
+- Réglages Immofacile : type d'action pour noter le message du prospect dans l'historique du contact.
+- Les leads « recherche » (Figaro, Page Pro Leboncoin…) créent une recherche d'acquéreur dans le CRM.
+
 ## 1.0.0
 
 - Première version : plateforme de leads immobiliers multi-clients (un client = un tenant Saltcorn), CRM Immofacile ou Salesforce.
