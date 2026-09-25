@@ -1,0 +1,47 @@
+/* Construit la configuration du moteur (dysizz-flow, lib/leads) depuis les tables ld_*.
+   Références de personnes dans les tables : « p:<id de ligne> » ou une adresse e-mail. */
+"use strict";
+const { tables } = require("./schema");
+
+const liste = (s) => String(s || "").split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
+const json = (s, def) => { if (!s) return def; if (typeof s === "object") return s; try { return JSON.parse(s); } catch (e) { return def; } };
+const DEFAUT = {
+  crm: "immofacile", mode: "ombre", envoi_mails: false, consentement_actif: true, consentement_libelle: "Demande de contact via {portail} du {date}", utiliser_relais: true,
+  id_crm_liens: "immo-facile-(\\d{6,})", prefixe_secrets: "LEADS_CRM",
+};
+
+const reglages = async () => {
+  const t = await tables();
+  const r = (await t.reglages.getRows({}, { orderBy: "id", limit: 1 }))[0] || {};
+  const o = { ...DEFAUT };
+  for (const [k, v] of Object.entries(r)) if (v !== null && v !== undefined && v !== "") o[k] = v;
+  return o;
+};
+
+const charger = async () => {
+  const t = await tables();
+  const R = await reglages();
+  const [agences, personnes, regles, absences, origines, siege] = await Promise.all([t.agences.getRows({}), t.personnes.getRows({}), t.regles.getRows({}), t.absences.getRows({}), t.origines.getRows({}), t.siege.getRows({})]);
+  const idMoteur = new Map(personnes.map((p) => [p.id, p.crm_id ? String(p.crm_id) : "p" + p.id]));
+  const ref = (s) => { const v = String(s || "").trim(); if (!v) return null; const m = v.match(/^p:(\d+)$/); if (m) return idMoteur.has(+m[1]) ? { personne: idMoteur.get(+m[1]) } : null; return /@/.test(v) ? { email: v } : null; };
+  const conf = {
+    domaines_agence: liste(R.domaines_agence), sites: json(R.sites, []), objets_campagnes: String(R.objets_campagnes || "").split("\n").map((x) => x.trim()).filter(Boolean),
+    id_crm_liens: String(R.id_crm_liens || "").split("\n").map((x) => x.trim()).filter(Boolean), origines_portail: json(R.origines_portail, {}),
+    utiliser_relais: R.utiliser_relais !== false,
+    agences: agences.filter((a) => a.actif !== false).map((a) => ({ id: String(a.crm_id || "a" + a.id), nom: a.nom, boites: liste(a.boites), negociateur_defaut: a.negociateur_defaut ? (ref(a.negociateur_defaut) || {}).personne || a.negociateur_defaut : null })),
+    origines: origines.map((o) => ({ id: o.crm_id ? (isFinite(+o.crm_id) ? +o.crm_id : o.crm_id) : null, code: o.code, libelle: o.libelle })),
+    consentement: { actif: !!R.consentement_actif, libelle: R.consentement_libelle },
+    routage: {
+      personnes: personnes.map((p) => ({ id: idMoteur.get(p.id), ligne: p.id, nom: p.nom, email: p.email, role: p.role || "negociateur", actif: p.actif !== false, agence_id: p.agence_crm_id,
+        assistante_id: p.assistante ? idMoteur.get(p.assistante) : null, temps: p.temps || "plein", jours: liste(p.jours).map(Number).filter((n) => n >= 1 && n <= 7), remplacant_hors_jours: ref(p.remplacant_hors_jours) })),
+      regles: regles.filter((r) => r.actif !== false).map((r) => ({ id: "r" + r.id, libelle: r.libelle, cible: r.tous ? { tous: true } : { negociateurs: liste(r.negociateurs).map((x) => (ref(x) || {}).personne || x) },
+        couper_negociateur: !!r.couper_negociateur, assistante: r.assistante || "garder", assistante_remplacante: ref(r.assistante_remplacante), adresses_libres: liste(r.adresses_libres) })),
+      absences: absences.filter((a) => a.actif !== false).map((a) => ({ personne_id: idMoteur.get(a.personne), debut: a.debut, fin: a.fin, remplacant: ref(a.remplacant), motif: a.motif || "congés" })),
+      siege: siege.filter((s) => s.actif !== false).map((s) => s.email),
+    },
+  };
+  const crm = { type: R.crm, reglages: json(R.crm_reglages, {}), prefixe: R.prefixe_secrets || "LEADS_CRM", mode: R.mode === "reel" ? "reel" : "ombre" };
+  return { conf, crm, reglages: R, idMoteur };
+};
+
+module.exports = { charger, reglages, liste, json, DEFAUT };
