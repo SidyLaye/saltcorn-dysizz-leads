@@ -8,8 +8,28 @@ const { retraiter } = require("../dossier");
 const U = require("../ui");
 
 const refuse = (res) => res.status(403).send("Réservé aux administrateurs");
-const sitesTexte = (s) => (json(s, []) || []).map((x) => `${x.domaine} | ${(x.noms || []).join(" / ")} | ${x.origine || ""}`).join("\n");
-const sitesLire = (t) => String(t || "").split("\n").map((l) => l.split("|").map((x) => x.trim())).filter((p) => p[0]).map(([domaine, noms, origine]) => ({ domaine: domaine.toLowerCase().replace(/^www\./, ""), noms: String(noms || "").split("/").map((x) => x.trim()).filter(Boolean), origine: origine || domaine.replace(/[.-]/g, "_") }));
+const sitesTexte = (s) => (json(s, []) || []).map((x) =>
+  `${x.domaine} | ${(x.noms || []).join(" / ")} | ${x.origine || ""} | ${x.libelle || ""}`
+).join("\n");
+
+const sitesLire = (t) =>
+  String(t || "")
+    .split("\n")
+    .map((l) => l.split("|").map((x) => x.trim()))
+    .filter((p) => p[0])
+    .map(([domaine, noms, origine, libelle]) => {
+      const alias = String(noms || "")
+        .split("/")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+      return {
+        domaine: domaine.toLowerCase().replace(/^www\./, ""),
+        noms: alias,
+        origine: origine || domaine.replace(/[.-]/g, "_"),
+        libelle: libelle || alias[0] || domaine
+      };
+    });
 
 const page = async (req, res) => {
   if (!isAdmin(req)) return refuse(res);
@@ -50,7 +70,7 @@ ${U.champ("", U.coche("m_actif", e ? e.actif : false, "Écouter cette boîte (le
 ${e ? `<p class="ld-mute" style="margin:8px 0 0">État : ${esc(e.etat || "—")} · ${+e.recus || 0} mail(s) reçu(s)${e.erreur ? " · " + esc(e.erreur) : ""}</p>` : ""}`)}
 ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts dépliés)")}
-${U.champ("Sites d'agence (leads « AC3 »)", U.zone("sites", sitesTexte(R.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT | selectionhabitat_com" }), "domaine | noms affichés (séparés par /) | code de l'origine")}
+${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT / SH | selectionhabitat_com | Sélection Habitat" }), "domaine | alias | code origine CRM | nom métier")}
 ${U.champ("Objets des campagnes (réponses à trier)", U.zone("objets_campagnes", R.objets_campagnes || "", 3))}
 ${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail → origine (JSON)", U.zone("origines_portail", typeof R.origines_portail === "string" ? R.origines_portail : JSON.stringify(R.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}

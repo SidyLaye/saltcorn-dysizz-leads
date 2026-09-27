@@ -1,16 +1,16 @@
-/* dysizz-leads 1.2.0 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
+/* dysizz-leads 1.3.1 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
 "use strict";
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// src/core.js
+// ../src/core.js
 var require_core = __commonJS({
-  "src/core.js"(exports2, module2) {
+  "../src/core.js"(exports2, module2) {
     "use strict";
     var PLUGIN2 = "dysizz-leads";
-    var VERSION2 = true ? "1.2.0" : "dev";
+    var VERSION2 = true ? "1.3.1" : "dev";
     var isAdmin = (req) => !!(req && req.user && req.user.role_id === 1);
     var peutVoir2 = (req) => !!(req && req.user && req.user.role_id <= 40);
     var esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -38,9 +38,9 @@ var require_core = __commonJS({
   }
 });
 
-// src/ui.js
+// ../src/ui.js
 var require_ui = __commonJS({
-  "src/ui.js"(exports2, module2) {
+  "../src/ui.js"(exports2, module2) {
     "use strict";
     var { esc, VERSION: VERSION2 } = require_core();
     var ONGLETS = [["", "Tableau de bord", "fas fa-gauge-high"], ["liste", "Leads", "fas fa-inbox"], ["dossiers", "Conversations", "fas fa-comments"], ["lecture", "Lecture des mails", "fas fa-wand-magic-sparkles"], ["envoi", "Envoi", "fas fa-paper-plane"], ["absences", "Absences", "fas fa-umbrella-beach"], ["demandes", "Demandes", "fas fa-clipboard-list"], ["reglages", "R\xE9glages", "fas fa-sliders-h"], ["chaine", "Cha\xEEne", "fas fa-diagram-project"], ["import", "Import", "fas fa-file-import"]];
@@ -109,9 +109,9 @@ ${bandeau}${flash(req)}<h1 class="ld-titre">${esc(titre)}</h1>${html}</div>`.rep
   }
 });
 
-// src/schema.js
+// ../src/schema.js
 var require_schema = __commonJS({
-  "src/schema.js"(exports2, module2) {
+  "../src/schema.js"(exports2, module2) {
     "use strict";
     var T = {
       reglages: { name: "ld_reglages", desc: "R\xE9glages du client (une seule ligne)", fields: [
@@ -349,9 +349,9 @@ var require_schema = __commonJS({
   }
 });
 
-// src/conf.js
+// ../src/conf.js
 var require_conf = __commonJS({
-  "src/conf.js"(exports2, module2) {
+  "../src/conf.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var liste = (s) => String(s || "").split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
@@ -452,9 +452,9 @@ var require_conf = __commonJS({
   }
 });
 
-// src/fil.js
+// ../src/fil.js
 var require_fil = __commonJS({
-  "src/fil.js"(exports2, module2) {
+  "../src/fil.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var tel9 = (t) => String(t || "").replace(/\D/g, "").slice(-9);
@@ -537,9 +537,9 @@ var require_fil = __commonJS({
   }
 });
 
-// src/catalogue.js
+// ../src/catalogue.js
 var require_catalogue = __commonJS({
-  "src/catalogue.js"(exports2, module2) {
+  "../src/catalogue.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var { flowApi } = require_core();
@@ -652,9 +652,9 @@ var require_catalogue = __commonJS({
   }
 });
 
-// src/gabarits.js
+// ../src/gabarits.js
 var require_gabarits = __commonJS({
-  "src/gabarits.js"(exports2, module2) {
+  "../src/gabarits.js"(exports2, module2) {
     "use strict";
     var { tables } = require_schema();
     var { reglages } = require_conf();
@@ -788,9 +788,9 @@ var require_gabarits = __commonJS({
   }
 });
 
-// src/dossier.js
+// ../src/dossier.js
 var require_dossier = __commonJS({
-  "src/dossier.js"(exports2, module2) {
+  "../src/dossier.js"(exports2, module2) {
     "use strict";
     var { tables, MAILS } = require_schema();
     var { charger } = require_conf();
@@ -810,7 +810,8 @@ var require_dossier = __commonJS({
         traite_le: /* @__PURE__ */ new Date(),
         expediteur: courte(mail.expediteur, 300),
         objet: courte(mail.objet, 400),
-        portail: x.portail === "inconnu" || !x.portail ? x.portail_nom || x.portail || "" : x.portail,
+        portail: d.portail || (x.portail === "inconnu" || !x.portail ? x.portail_nom || x.portail || "" : x.portail),
+        source: d.source || d.portail || x.portail_nom || x.portail || "",
         nature: x.nature || "",
         statut: d.statut,
         role: d.role || "",
@@ -874,6 +875,8 @@ var require_dossier = __commonJS({
       return api.verrou.sous(cleVerrou(api, m, conf, mail.id), async () => {
         const lecture = await G.optionsLecture(api).catch(() => ({}));
         const d = await api.leads.traiter(m, client, conf, { dossiers: { trouver: fil.trouver }, ...lecture });
+        if (d.dossier && d.portail)
+          d.dossier.portail = d.portail;
         d.execution = { ...await api.leads.executer(d, client, { mode }), mode };
         if (client.notees) d.execution.ecritures_notees = client.notees.map(sansCommentaire);
         const garder = d.dossier && !(d.statut === "a_trier" && !d.dossier.existant);
@@ -887,9 +890,9 @@ var require_dossier = __commonJS({
   }
 });
 
-// src/installer.js
+// ../src/installer.js
 var require_installer = __commonJS({
-  "src/installer.js"(exports2, module2) {
+  "../src/installer.js"(exports2, module2) {
     "use strict";
     var { tables, MAILS } = require_schema();
     var { flowApi } = require_core();
@@ -975,9 +978,9 @@ var require_installer = __commonJS({
   }
 });
 
-// src/pages/dossiers.js
+// ../src/pages/dossiers.js
 var require_dossiers = __commonJS({
-  "src/pages/dossiers.js"(exports2, module2) {
+  "../src/pages/dossiers.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, go, dateFr, flowApi } = require_core();
     var { tables } = require_schema();
@@ -1063,9 +1066,9 @@ ${U.carte("Commentaire \xE9crit dans le CRM (projet de recherche)", `<pre class=
   }
 });
 
-// src/pages/leads.js
+// ../src/pages/leads.js
 var require_leads = __commonJS({
-  "src/pages/leads.js"(exports2, module2) {
+  "../src/pages/leads.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, isAdmin, hidden, go, dateFr, flowApi } = require_core();
     var { tables, MAILS } = require_schema();
@@ -1240,9 +1243,9 @@ ${l.ancien_statut ? U.carte("Ancien syst\xE8me (comparaison)", `<dl class="ld-kv
   }
 });
 
-// src/pages/equipe.js
+// ../src/pages/equipe.js
 var require_equipe = __commonJS({
-  "src/pages/equipe.js"(exports2, module2) {
+  "../src/pages/equipe.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, hidden, go, jour, flowApi } = require_core();
     var { tables } = require_schema();
@@ -1410,9 +1413,9 @@ ${U.carte("Nouvelle absence", formAbsence(req, P, null, "/leads/absences"))}`;
   }
 });
 
-// src/pages/demandes.js
+// ../src/pages/demandes.js
 var require_demandes = __commonJS({
-  "src/pages/demandes.js"(exports2, module2) {
+  "../src/pages/demandes.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, isAdmin, hidden, go, dateFr } = require_core();
     var { tables, STATUTS_DEMANDE, URGENCES } = require_schema();
@@ -1478,9 +1481,9 @@ ${U.carte("Suivi", U.table(["Date", "\xC9tape", "Note", "Par"], E2.map((e) => [e
   }
 });
 
-// src/pages/reglages.js
+// ../src/pages/reglages.js
 var require_reglages = __commonJS({
-  "src/pages/reglages.js"(exports2, module2) {
+  "../src/pages/reglages.js"(exports2, module2) {
     "use strict";
     var { esc, isAdmin, hidden, go, flowApi } = require_core();
     var { tables, MAILS } = require_schema();
@@ -1489,8 +1492,18 @@ var require_reglages = __commonJS({
     var { retraiter } = require_dossier();
     var U = require_ui();
     var refuse = (res) => res.status(403).send("R\xE9serv\xE9 aux administrateurs");
-    var sitesTexte = (s) => (json(s, []) || []).map((x) => `${x.domaine} | ${(x.noms || []).join(" / ")} | ${x.origine || ""}`).join("\n");
-    var sitesLire = (t) => String(t || "").split("\n").map((l) => l.split("|").map((x) => x.trim())).filter((p) => p[0]).map(([domaine, noms, origine]) => ({ domaine: domaine.toLowerCase().replace(/^www\./, ""), noms: String(noms || "").split("/").map((x) => x.trim()).filter(Boolean), origine: origine || domaine.replace(/[.-]/g, "_") }));
+    var sitesTexte = (s) => (json(s, []) || []).map(
+      (x) => `${x.domaine} | ${(x.noms || []).join(" / ")} | ${x.origine || ""} | ${x.libelle || ""}`
+    ).join("\n");
+    var sitesLire = (t) => String(t || "").split("\n").map((l) => l.split("|").map((x) => x.trim())).filter((p) => p[0]).map(([domaine, noms, origine, libelle]) => {
+      const alias = String(noms || "").split("/").map((x) => x.trim()).filter(Boolean);
+      return {
+        domaine: domaine.toLowerCase().replace(/^www\./, ""),
+        noms: alias,
+        origine: origine || domaine.replace(/[.-]/g, "_"),
+        libelle: libelle || alias[0] || domaine
+      };
+    });
     var page = async (req, res) => {
       if (!isAdmin(req)) return refuse(res);
       const t = await tables();
@@ -1530,7 +1543,7 @@ ${U.champ("", U.coche("m_actif", e ? e.actif : false, "\xC9couter cette bo\xEEte
 ${e ? `<p class="ld-mute" style="margin:8px 0 0">\xC9tat : ${esc(e.etat || "\u2014")} \xB7 ${+e.recus || 0} mail(s) re\xE7u(s)${e.erreur ? " \xB7 " + esc(e.erreur) : ""}</p>` : ""}`)}
 ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R2.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts d\xE9pli\xE9s)")}
-${U.champ("Sites d'agence (leads \xAB AC3 \xBB)", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT | selectionhabitat_com" }), "domaine | noms affich\xE9s (s\xE9par\xE9s par /) | code de l'origine")}
+${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT / SH | selectionhabitat_com | S\xE9lection Habitat" }), "domaine | alias | code origine CRM | nom m\xE9tier")}
 ${U.champ("Objets des campagnes (r\xE9ponses \xE0 trier)", U.zone("objets_campagnes", R2.objets_campagnes || "", 3))}
 ${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R2.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail \u2192 origine (JSON)", U.zone("origines_portail", typeof R2.origines_portail === "string" ? R2.origines_portail : JSON.stringify(R2.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}
@@ -1739,9 +1752,9 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
   }
 });
 
-// src/pages/chaine.js
+// ../src/pages/chaine.js
 var require_chaine = __commonJS({
-  "src/pages/chaine.js"(exports2, module2) {
+  "../src/pages/chaine.js"(exports2, module2) {
     "use strict";
     var { esc, isAdmin, hidden, go, dateFr, flowApi } = require_core();
     var { tables } = require_schema();
@@ -1896,9 +1909,9 @@ ${U.carte("Nouveaux exp\xE9diteurs \xB7 30 jours", U.table(["Domaine", "Mails", 
   }
 });
 
-// src/pages/lecture.js
+// ../src/pages/lecture.js
 var require_lecture = __commonJS({
-  "src/pages/lecture.js"(exports2, module2) {
+  "../src/pages/lecture.js"(exports2, module2) {
     "use strict";
     var { esc, peutVoir: peutVoir2, isAdmin, hidden, go, dateFr, flowApi } = require_core();
     var { tables } = require_schema();
@@ -2013,9 +2026,9 @@ ${admin ? U.carte("Reprendre les gabarits de l'ancien AMBS", `<p>Fichier <code>t
   }
 });
 
-// src/blocks.js
+// ../src/blocks.js
 var require_blocks = __commonJS({
-  "src/blocks.js"(exports2, module2) {
+  "../src/blocks.js"(exports2, module2) {
     "use strict";
     var { charger } = require_conf();
     var { enregistrer, traiterMail } = require_dossier();
@@ -2060,9 +2073,9 @@ var require_blocks = __commonJS({
   }
 });
 
-// src/taches.js
+// ../src/taches.js
 var require_taches = __commonJS({
-  "src/taches.js"(exports2, module2) {
+  "../src/taches.js"(exports2, module2) {
     "use strict";
     var cluster = require("cluster");
     var G = globalThis[Symbol.for("dysizz-leads.taches")] || (globalThis[Symbol.for("dysizz-leads.taches")] = { minuteurs: /* @__PURE__ */ new Map() });
@@ -2151,7 +2164,7 @@ var require_taches = __commonJS({
   }
 });
 
-// src/index.js
+// ../src/index.js
 var { PLUGIN, VERSION, peutVoir } = require_core();
 var { CSS } = require_ui();
 var L = require_leads();
