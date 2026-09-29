@@ -85,4 +85,4 @@ const traiterMail = async (mailId, { forcerOmbre = false } = {}) => {
 
 const retraiter = (mailId, o) => traiterMail(mailId, o);
 
-module.exports = { enregistrer, retraiter, traiterMail, versLigne, versMoteur };
+module.exports = { enregistrer, retraiter, traiterMail, versLigne, versMoteur, cleVerrou };
