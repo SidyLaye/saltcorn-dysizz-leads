@@ -1,4 +1,4 @@
-/* dysizz-leads 1.3.2 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
+/* dysizz-leads 1.3.3 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
 "use strict";
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -10,7 +10,7 @@ var require_core = __commonJS({
   "../src/core.js"(exports2, module2) {
     "use strict";
     var PLUGIN2 = "dysizz-leads";
-    var VERSION2 = true ? "1.3.2" : "dev";
+    var VERSION2 = true ? "1.3.3" : "dev";
     var isAdmin = (req) => !!(req && req.user && req.user.role_id === 1);
     var peutVoir2 = (req) => !!(req && req.user && req.user.role_id <= 40);
     var esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -182,6 +182,7 @@ var require_schema = __commonJS({
         ["expediteur", "String"],
         ["objet", "String"],
         ["portail", "String"],
+        ["source", "String"],
         ["nature", "String"],
         ["statut", "String"],
         ["decision", "String"],
@@ -1283,7 +1284,7 @@ var require_equipe = __commonJS({
       }
       const edit = q.regle ? R2.find((r) => r.id === +q.regle) || {} : {};
       const form = `<form method="post" action="/leads/envoi/regle">${hidden(req)}<input type="hidden" name="id" value="${edit.id || ""}"><div class="ld-form">
-${U.champ("Nom de la r\xE8gle", U.input("libelle", edit.libelle || "", { required: true, placeholder: "ex. S\xE9n\xE9gal : assistante seule" }))}
+${U.champ("Nom de la r\xE8gle", U.input("libelle", edit.libelle || "", { required: true, placeholder: "ex. Agence de Dakar : assistante seule" }))}
 ${U.champ("S'applique \xE0", `${U.select("tous", [["", "des n\xE9gociateurs choisis"], ["1", "tous les n\xE9gociateurs"]], edit.tous ? "1" : "")}<select class="form-select form-select-sm mt-1" name="negociateurs" multiple size="5">${negos.map((p) => `<option value="p:${p.id}" ${liste(edit.negociateurs).includes("p:" + p.id) ? "selected" : ""}>${esc(p.nom)}</option>`).join("")}</select>`, "Ctrl/Cmd + clic pour en choisir plusieurs")}
 ${U.champ("N\xE9gociateur", U.select("couper_negociateur", [["", "re\xE7oit le lead"], ["1", "ne re\xE7oit pas le lead (coup\xE9)"]], edit.couper_negociateur ? "1" : ""))}
 ${U.champ("Assistant(e)", U.select("assistante", [["garder", "garder la sienne"], ["couper", "couper"], ["remplacer", "remplacer par\u2026"]], edit.assistante || "garder"))}
@@ -1543,7 +1544,7 @@ ${U.champ("", U.coche("m_actif", e ? e.actif : false, "\xC9couter cette bo\xEEte
 ${e ? `<p class="ld-mute" style="margin:8px 0 0">\xC9tat : ${esc(e.etat || "\u2014")} \xB7 ${+e.recus || 0} mail(s) re\xE7u(s)${e.erreur ? " \xB7 " + esc(e.erreur) : ""}</p>` : ""}`)}
 ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R2.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts d\xE9pli\xE9s)")}
-${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT / SH | selectionhabitat_com | S\xE9lection Habitat" }), "domaine | alias | code origine CRM | nom m\xE9tier")}
+${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "agence-exemple.fr | AGENCE EXEMPLE / AE | agence_exemple_fr | Agence Exemple" }), "domaine | alias | code origine CRM | nom m\xE9tier")}
 ${U.champ("Objets des campagnes (r\xE9ponses \xE0 trier)", U.zone("objets_campagnes", R2.objets_campagnes || "", 3))}
 ${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R2.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail \u2192 origine (JSON)", U.zone("origines_portail", typeof R2.origines_portail === "string" ? R2.origines_portail : JSON.stringify(R2.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}
@@ -1648,7 +1649,6 @@ ${U.carte("Outils", `<div class="ld-actions">
 <p>Pour comparer avec l'ancien syst\xE8me, ajoute le fichier <code>comparaison-ancien.json</code> (fabriqu\xE9 depuis la sauvegarde par <code>tools/comparaison-sauvegarde.py</code>) : chaque lead est reli\xE9 au r\xE9sultat de l'ancien (statut, bien, destinataires) par le num\xE9ro du mail dans la bo\xEEte.</p>
 <p class="ld-mute">Aujourd'hui : ${n.agences} agence(s), ${n.personnes} personne(s), ${n.origines} origine(s). L'import compl\xE8te et met \xE0 jour, il ne supprime rien.</p>
 <form method="post" action="/leads/import" enctype="multipart/form-data">${hidden(req)}<input class="form-control form-control-sm" type="file" name="fichiers" multiple accept=".json" required>
-<div class="ld-actions">${U.coche("senegal", false, "Reprendre la r\xE8gle cod\xE9e en dur de l'ancien syst\xE8me (n\xE9gociateurs @selectionsenegal.com \u2192 assistante seule gemma@selectionhabitat.com)")}</div>
 <div class="ld-actions"><button class="btn btn-sm btn-primary">Importer</button></div></form>`)}
 ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de lead. Ils sont trait\xE9s en mode ombre (CRM lu, rien d'\xE9crit), par lots de 50.</p><form method="post" action="/leads/import/rejouer">${hidden(req)}<button class="btn btn-sm btn-outline-primary" ${sans ? "" : "disabled"}>Traiter 50 mails</button></form>`)}`;
       U.page(req, res, "Import", "import", html);
@@ -1712,14 +1712,6 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
         }
         log.push("destinataires en plus \u2192 si\xE8ge et r\xE8gles");
       }
-      if ((req.body || {}).senegal === "on" && !await t.regles.getRow({ libelle: "S\xE9n\xE9gal : assistante seule" })) {
-        const P = await t.personnes.getRows({});
-        const ids = P.filter((p) => /@selectionsenegal\.com$/.test(p.email || "") && p.role !== "assistante" && ["voury", "christophe", "claude", "josephine"].includes(String(p.email).split("@")[0])).map((p) => "p:" + p.id);
-        if (ids.length) {
-          await t.regles.insertRow({ libelle: "S\xE9n\xE9gal : assistante seule", tous: false, negociateurs: ids.join(","), couper_negociateur: true, assistante: "remplacer", assistante_remplacante: "gemma@selectionhabitat.com", adresses_libres: "", actif: true, maj_le: /* @__PURE__ */ new Date() });
-          log.push("r\xE8gle S\xE9n\xE9gal");
-        }
-      }
       const comp = Object.entries(F).find(([k, v]) => /^comparaison/.test(k) && Array.isArray(v));
       if (comp) {
         const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
@@ -1737,16 +1729,17 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
       if (!isAdmin(req)) return refuse(res);
       const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
       const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.date_envoi, m.id limit 50`)).rows.map((r) => r.id);
-      let ok = 0, ko = 0;
+      let ok = 0, ko = 0, raison = "";
       for (const id of ids) {
         try {
           await retraiter(id, { forcerOmbre: true });
           ok++;
         } catch (e) {
           ko++;
+          if (!raison) raison = String(e.message || e).slice(0, 200);
         }
       }
-      go(res, "/leads/import", `${ok} mail(s) trait\xE9(s) en ombre${ko ? `, ${ko} en \xE9chec` : ""}`, !!ko && !ok);
+      go(res, "/leads/import", `${ok} mail(s) trait\xE9(s) en ombre${ko ? `, ${ko} en \xE9chec (1re erreur : ${raison})` : ""}`, !!ko && !ok);
     };
     module2.exports = { page, enregistrer, tester, installerPost, importPage, importPost, rejouer, sitesLire };
   }

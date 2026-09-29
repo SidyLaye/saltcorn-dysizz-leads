@@ -24,7 +24,7 @@ const T = {
   siege: { name: "ld_siege", desc: "Adresses qui reçoivent toujours", fields: [["email", "String", { required: true }], ["libelle", "String"], ["actif", "Bool"]] },
   leads: { name: "ld_leads", desc: "Leads traités (un par mail)", fields: [
     ["mail_id", "Integer"], ["message_id", "String"], ["recu_le", "Date"], ["traite_le", "Date"], ["expediteur", "String"], ["objet", "String"],
-    ["portail", "String"], ["nature", "String"], ["statut", "String"], ["decision", "String"],
+    ["portail", "String"], ["source", "String"], ["nature", "String"], ["statut", "String"], ["decision", "String"],
     ["contact_nom", "String"], ["contact_email", "String"], ["contact_tel", "String"], ["contact_crm", "String"], ["contact_action", "String"],
     ["reference", "String"], ["bien_crm", "String"], ["bien_ref_crm", "String"], ["bien_methode", "String"], ["bien_confiance", "String"],
     ["agence", "String"], ["negociateur", "String"], ["origine", "String"], ["site", "String"], ["destinataires", "String"],

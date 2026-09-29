@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 1.3.3
+
+- **Correctif** : sur une installation neuve, chaque mail échouait (« column source of relation ld_leads does not exist ») : la colonne `source` manquait au schéma de `ld_leads`. Elle est ajoutée au démarrage. Un test vérifie désormais que chaque colonne écrite existe.
+- **Rejouer en ombre** : en cas d'échec, l'écran donne la première erreur au lieu de « 50 en échec » seul.
+- Dépôt public : la règle propre à un client (adresses codées en dur) est retirée de l'import ; elle se crée dans l'écran Envoi comme toute autre règle. Exemples neutres dans les réglages et les tests.
+- Description du plugin : accents réparés.
+
 ## 1.2.0
 
 - **Lecture des mails** (nouvel onglet) : part des mails lus par les règles, par un gabarit appris, complétés par l'IA ; appels d'IA du jour et plafond ; liste des gabarits appris (champs lus, observations, échecs, suspendre / activer) ; import de `gabarit_version.json` de l'ancien AMBS.

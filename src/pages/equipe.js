@@ -33,7 +33,7 @@ const envoi = async (req, res) => {
   }
   const edit = q.regle ? R.find((r) => r.id === +q.regle) || {} : {};
   const form = `<form method="post" action="/leads/envoi/regle">${hidden(req)}<input type="hidden" name="id" value="${edit.id || ""}"><div class="ld-form">
-${U.champ("Nom de la règle", U.input("libelle", edit.libelle || "", { required: true, placeholder: "ex. Sénégal : assistante seule" }))}
+${U.champ("Nom de la règle", U.input("libelle", edit.libelle || "", { required: true, placeholder: "ex. Agence de Dakar : assistante seule" }))}
 ${U.champ("S'applique à", `${U.select("tous", [["", "des négociateurs choisis"], ["1", "tous les négociateurs"]], edit.tous ? "1" : "")}<select class="form-select form-select-sm mt-1" name="negociateurs" multiple size="5">${negos.map((p) => `<option value="p:${p.id}" ${liste(edit.negociateurs).includes("p:" + p.id) ? "selected" : ""}>${esc(p.nom)}</option>`).join("")}</select>`, "Ctrl/Cmd + clic pour en choisir plusieurs")}
 ${U.champ("Négociateur", U.select("couper_negociateur", [["", "reçoit le lead"], ["1", "ne reçoit pas le lead (coupé)"]], edit.couper_negociateur ? "1" : ""))}
 ${U.champ("Assistant(e)", U.select("assistante", [["garder", "garder la sienne"], ["couper", "couper"], ["remplacer", "remplacer par…"]], edit.assistante || "garder"))}
