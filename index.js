@@ -1,4 +1,4 @@
-/* dysizz-leads 1.3.2 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
+/* dysizz-leads 1.4.0 — FICHIER GÉNÉRÉ par tools/build.mjs depuis src/. Ne pas modifier à la main. */
 "use strict";
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -10,7 +10,7 @@ var require_core = __commonJS({
   "../src/core.js"(exports2, module2) {
     "use strict";
     var PLUGIN2 = "dysizz-leads";
-    var VERSION2 = true ? "1.3.2" : "dev";
+    var VERSION2 = true ? "1.4.0" : "dev";
     var isAdmin = (req) => !!(req && req.user && req.user.role_id === 1);
     var peutVoir2 = (req) => !!(req && req.user && req.user.role_id <= 40);
     var esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -182,6 +182,7 @@ var require_schema = __commonJS({
         ["expediteur", "String"],
         ["objet", "String"],
         ["portail", "String"],
+        ["source", "String"],
         ["nature", "String"],
         ["statut", "String"],
         ["decision", "String"],
@@ -886,7 +887,7 @@ var require_dossier = __commonJS({
       });
     };
     var retraiter = (mailId, o) => traiterMail(mailId, o);
-    module2.exports = { enregistrer, retraiter, traiterMail, versLigne, versMoteur };
+    module2.exports = { enregistrer, retraiter, traiterMail, versLigne, versMoteur, cleVerrou };
   }
 });
 
@@ -901,11 +902,27 @@ var require_installer = __commonJS({
       name: "ld_traitement",
       when: "DzfMailRecu",
       channel: ECOUTEUR,
-      version: 2,
-      description: "dysizz-leads v2 : chaque mail re\xE7u par l'\xE9couteur \xAB leads \xBB est trait\xE9 une seule fois (dossier prospect \xD7 bien, catalogue local, CRM selon le mode). Mode ombre par d\xE9faut. Aucun mail n'est envoy\xE9.",
+      version: 3,
+      description: "dysizz-leads v3 : chaque mail re\xE7u par l'\xE9couteur \xAB leads \xBB est trait\xE9 une seule fois, \xE9tape par \xE9tape (lecture, bien, contact, consentement, destinataires, CRM selon le mode, enregistrement). Mode ombre par d\xE9faut. Aucun mail n'est envoy\xE9.",
+      /* next_step explicite : une lecture qui suffit (non-lead, réponse de l'équipe) saute aux écritures */
       steps: [
-        { name: "une_fois", action_name: "dzf_idempotence", configuration: { cle: "ld-{{id}}", duree_h: 720 } },
-        { name: "traiter", action_name: "dzx_leads_traiter", configuration: { id: "{{id}}" } }
+        { name: "une_fois", action_name: "dzf_idempotence", configuration: { cle: "ld-{{id}}", duree_h: 720 }, next_step: 'deja_traite ? "" : "preparer"' },
+        { name: "preparer", action_name: "dzx_leads_preparer", configuration: { id: "{{id}}" }, next_step: "si_erreur" },
+        { name: "si_erreur", action_name: "SetErrorHandler", configuration: { error_handling_step: "rendre_le_verrou_erreur" }, next_step: "attendre_son_tour" },
+        { name: "attendre_son_tour", action_name: "dzf_verrou", configuration: { action: "prendre", nom: "ld-{{lead.cle}}", duree: 180, attente: 60 }, next_step: "lire" },
+        { name: "lire", action_name: "dzx_leads_lire", configuration: { lead: "{{lead}}" }, next_step: 'dossier.fin ? "ecrire_crm" : "bien"' },
+        { name: "bien", action_name: "dzx_leads_bien", configuration: {}, next_step: "contact" },
+        { name: "contact", action_name: "dzx_leads_contact", configuration: {}, next_step: "consentement" },
+        { name: "consentement", action_name: "dzx_leads_consentement", configuration: {}, next_step: "destinataires" },
+        { name: "destinataires", action_name: "dzx_leads_destinataires", configuration: {}, next_step: "ecrire_crm" },
+        { name: "ecrire_crm", action_name: "dzx_leads_crm", configuration: {}, next_step: "enregistrer" },
+        { name: "enregistrer", action_name: "dzx_leads_ranger", configuration: {}, next_step: "rendre_le_verrou" },
+        { name: "rendre_le_verrou", action_name: "dzf_verrou", configuration: { action: "lib\xE9rer", nom: "ld-{{lead.cle}}" }, next_step: "" },
+        /* en cas d'erreur : rendre le verrou, puis signaler l'erreur (l'exécution apparaît en échec ;
+           la tâche horaire reprend les mails restés sans lead) */
+        { name: "rendre_le_verrou_erreur", action_name: "dzf_verrou", configuration: { action: "lib\xE9rer", nom: "ld-{{lead.cle}}" }, next_step: "plus_de_filet" },
+        { name: "plus_de_filet", action_name: "SetErrorHandler", configuration: { error_handling_step: "" }, next_step: "signaler" },
+        { name: "signaler", action_name: "dzf_verifier", configuration: { condition: "false", si_faux: "arr\xEAter en erreur", message: "traitement interrompu : {{__error.message}}" }, next_step: "" }
       ]
     };
     var aJour = async () => {
@@ -915,7 +932,7 @@ var require_installer = __commonJS({
     };
     var manque = () => {
       const st = require("@saltcorn/data/db/state").getState();
-      const need = ["dzf_idempotence", "dzx_leads_traiter"];
+      const need = [...new Set(WF.steps.map((s) => s.action_name).filter((a) => a !== "SetErrorHandler"))];
       return need.filter((a) => !st.actions || !st.actions[a]);
     };
     var installer = async ({ reecrire = false } = {}) => {
@@ -931,21 +948,21 @@ var require_installer = __commonJS({
       const Trigger = require("@saltcorn/data/models/trigger"), WS = require("@saltcorn/data/models/workflow_step"), db = require("@saltcorn/data/db");
       let t = Trigger.findOne({ name: WF.name });
       const def = { name: WF.name, description: WF.description, action: "Workflow", when_trigger: WF.when, channel: WF.channel, configuration: {}, min_role: 1 };
+      let refaire = reecrire;
       if (!t) {
         t = await Trigger.create(def);
         t = Trigger.findOne({ name: WF.name }) || t;
-        log.push("workflow ld_traitement cr\xE9\xE9");
+        refaire = true;
+        log.push(`workflow ${WF.name} cr\xE9\xE9 (${WF.steps.length} \xE9tapes)`);
       } else if (reecrire || !await aJour()) {
         await Trigger.update(t.id, def);
-        log.push("workflow ld_traitement r\xE9\xE9crit");
+        refaire = true;
+        log.push(`workflow ${WF.name} r\xE9\xE9crit (${WF.steps.length} \xE9tapes)`);
       } else {
-        log.push("workflow ld_traitement d\xE9j\xE0 l\xE0 (gard\xE9 tel quel)");
+        log.push(`workflow ${WF.name} d\xE9j\xE0 l\xE0 (gard\xE9 tel quel)`);
       }
-      if (reecrire || !(await WS.find({ trigger_id: t.id })).length || !(await WS.find({ trigger_id: t.id, action_name: "dzx_leads_traiter" })).length) {
+      if (refaire || !(await WS.find({ trigger_id: t.id })).length) {
         await db.deleteWhere("_sc_workflow_steps", { trigger_id: t.id });
-        WF.steps.forEach((s, i) => {
-          s.next_step = WF.steps[i + 1] ? WF.steps[i + 1].name : "";
-        });
         for (let i = 0; i < WF.steps.length; i++) {
           const s = WF.steps[i];
           await WS.create({ trigger_id: t.id, name: s.name, action_name: s.action_name, configuration: s.configuration, next_step: s.next_step, only_if: "", initial_step: i === 0 });
@@ -1283,7 +1300,7 @@ var require_equipe = __commonJS({
       }
       const edit = q.regle ? R2.find((r) => r.id === +q.regle) || {} : {};
       const form = `<form method="post" action="/leads/envoi/regle">${hidden(req)}<input type="hidden" name="id" value="${edit.id || ""}"><div class="ld-form">
-${U.champ("Nom de la r\xE8gle", U.input("libelle", edit.libelle || "", { required: true, placeholder: "ex. S\xE9n\xE9gal : assistante seule" }))}
+${U.champ("Nom de la r\xE8gle", U.input("libelle", edit.libelle || "", { required: true, placeholder: "ex. Agence de Dakar : assistante seule" }))}
 ${U.champ("S'applique \xE0", `${U.select("tous", [["", "des n\xE9gociateurs choisis"], ["1", "tous les n\xE9gociateurs"]], edit.tous ? "1" : "")}<select class="form-select form-select-sm mt-1" name="negociateurs" multiple size="5">${negos.map((p) => `<option value="p:${p.id}" ${liste(edit.negociateurs).includes("p:" + p.id) ? "selected" : ""}>${esc(p.nom)}</option>`).join("")}</select>`, "Ctrl/Cmd + clic pour en choisir plusieurs")}
 ${U.champ("N\xE9gociateur", U.select("couper_negociateur", [["", "re\xE7oit le lead"], ["1", "ne re\xE7oit pas le lead (coup\xE9)"]], edit.couper_negociateur ? "1" : ""))}
 ${U.champ("Assistant(e)", U.select("assistante", [["garder", "garder la sienne"], ["couper", "couper"], ["remplacer", "remplacer par\u2026"]], edit.assistante || "garder"))}
@@ -1543,7 +1560,7 @@ ${U.champ("", U.coche("m_actif", e ? e.actif : false, "\xC9couter cette bo\xEEte
 ${e ? `<p class="ld-mute" style="margin:8px 0 0">\xC9tat : ${esc(e.etat || "\u2014")} \xB7 ${+e.recus || 0} mail(s) re\xE7u(s)${e.erreur ? " \xB7 " + esc(e.erreur) : ""}</p>` : ""}`)}
 ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R2.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts d\xE9pli\xE9s)")}
-${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT / SH | selectionhabitat_com | S\xE9lection Habitat" }), "domaine | alias | code origine CRM | nom m\xE9tier")}
+${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R2.sites), 5, { placeholder: "agence-exemple.fr | AGENCE EXEMPLE / AE | agence_exemple_fr | Agence Exemple" }), "domaine | alias | code origine CRM | nom m\xE9tier")}
 ${U.champ("Objets des campagnes (r\xE9ponses \xE0 trier)", U.zone("objets_campagnes", R2.objets_campagnes || "", 3))}
 ${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R2.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail \u2192 origine (JSON)", U.zone("origines_portail", typeof R2.origines_portail === "string" ? R2.origines_portail : JSON.stringify(R2.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}
@@ -1648,7 +1665,6 @@ ${U.carte("Outils", `<div class="ld-actions">
 <p>Pour comparer avec l'ancien syst\xE8me, ajoute le fichier <code>comparaison-ancien.json</code> (fabriqu\xE9 depuis la sauvegarde par <code>tools/comparaison-sauvegarde.py</code>) : chaque lead est reli\xE9 au r\xE9sultat de l'ancien (statut, bien, destinataires) par le num\xE9ro du mail dans la bo\xEEte.</p>
 <p class="ld-mute">Aujourd'hui : ${n.agences} agence(s), ${n.personnes} personne(s), ${n.origines} origine(s). L'import compl\xE8te et met \xE0 jour, il ne supprime rien.</p>
 <form method="post" action="/leads/import" enctype="multipart/form-data">${hidden(req)}<input class="form-control form-control-sm" type="file" name="fichiers" multiple accept=".json" required>
-<div class="ld-actions">${U.coche("senegal", false, "Reprendre la r\xE8gle cod\xE9e en dur de l'ancien syst\xE8me (n\xE9gociateurs @selectionsenegal.com \u2192 assistante seule gemma@selectionhabitat.com)")}</div>
 <div class="ld-actions"><button class="btn btn-sm btn-primary">Importer</button></div></form>`)}
 ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de lead. Ils sont trait\xE9s en mode ombre (CRM lu, rien d'\xE9crit), par lots de 50.</p><form method="post" action="/leads/import/rejouer">${hidden(req)}<button class="btn btn-sm btn-outline-primary" ${sans ? "" : "disabled"}>Traiter 50 mails</button></form>`)}`;
       U.page(req, res, "Import", "import", html);
@@ -1712,14 +1728,6 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
         }
         log.push("destinataires en plus \u2192 si\xE8ge et r\xE8gles");
       }
-      if ((req.body || {}).senegal === "on" && !await t.regles.getRow({ libelle: "S\xE9n\xE9gal : assistante seule" })) {
-        const P = await t.personnes.getRows({});
-        const ids = P.filter((p) => /@selectionsenegal\.com$/.test(p.email || "") && p.role !== "assistante" && ["voury", "christophe", "claude", "josephine"].includes(String(p.email).split("@")[0])).map((p) => "p:" + p.id);
-        if (ids.length) {
-          await t.regles.insertRow({ libelle: "S\xE9n\xE9gal : assistante seule", tous: false, negociateurs: ids.join(","), couper_negociateur: true, assistante: "remplacer", assistante_remplacante: "gemma@selectionhabitat.com", adresses_libres: "", actif: true, maj_le: /* @__PURE__ */ new Date() });
-          log.push("r\xE8gle S\xE9n\xE9gal");
-        }
-      }
       const comp = Object.entries(F).find(([k, v]) => /^comparaison/.test(k) && Array.isArray(v));
       if (comp) {
         const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
@@ -1737,16 +1745,17 @@ ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) re\xE7u(s) n'ont pas encore de
       if (!isAdmin(req)) return refuse(res);
       const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
       const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.date_envoi, m.id limit 50`)).rows.map((r) => r.id);
-      let ok = 0, ko = 0;
+      let ok = 0, ko = 0, raison = "";
       for (const id of ids) {
         try {
           await retraiter(id, { forcerOmbre: true });
           ok++;
         } catch (e) {
           ko++;
+          if (!raison) raison = String(e.message || e).slice(0, 200);
         }
       }
-      go(res, "/leads/import", `${ok} mail(s) trait\xE9(s) en ombre${ko ? `, ${ko} en \xE9chec` : ""}`, !!ko && !ok);
+      go(res, "/leads/import", `${ok} mail(s) trait\xE9(s) en ombre${ko ? `, ${ko} en \xE9chec (1re erreur : ${raison})` : ""}`, !!ko && !ok);
     };
     module2.exports = { page, enregistrer, tester, installerPost, importPage, importPost, rejouer, sitesLire };
   }
@@ -2026,12 +2035,112 @@ ${admin ? U.carte("Reprendre les gabarits de l'ancien AMBS", `<p>Fichier <code>t
   }
 });
 
+// ../src/etapes.js
+var require_etapes = __commonJS({
+  "../src/etapes.js"(exports2, module2) {
+    "use strict";
+    var { MAILS } = require_schema();
+    var { charger } = require_conf();
+    var { flowApi } = require_core();
+    var fil = require_fil();
+    var { avecCatalogue } = require_catalogue();
+    var G = require_gabarits();
+    var { enregistrer, versMoteur, cleVerrou } = require_dossier();
+    var perm = (m) => Object.assign(new Error(m), { permanent: true });
+    var api = () => {
+      const a = flowApi();
+      if (!a) throw perm("dysizz-flow 2.4 ou plus r\xE9cent est n\xE9cessaire");
+      if (!a.leads || !a.leads.etapeLire) throw perm("dysizz-flow trop ancien pour le traitement en \xE9tapes : mettre dysizz-flow \xE0 jour (2.10 ou plus r\xE9cent)");
+      return a;
+    };
+    var obj = (v, nom = "dossier") => {
+      if (v && typeof v === "object") return v;
+      try {
+        return JSON.parse(v);
+      } catch (e) {
+        throw perm(`${nom} : il faut le r\xE9sultat de l'\xE9tape pr\xE9c\xE9dente ({{dossier}})`);
+      }
+    };
+    var lireMail = async (id) => {
+      const Table = require("@saltcorn/data/models/table");
+      const t = Table.findOne({ name: MAILS });
+      const m = t && await t.getRow({ id: +id });
+      if (!m) throw perm(`mail ${id} introuvable dans ${MAILS}`);
+      return m;
+    };
+    var clientCrm = async (crm, mode) => avecCatalogue(api().crmDepuisCoffre(crm.type, crm.reglages, crm.prefixe, mode));
+    var preparer = async (id, { forcerOmbre = false } = {}) => {
+      const a = api();
+      const mail = await lireMail(id);
+      const { conf, crm } = await charger();
+      return { mail_id: mail.id, objet: String(mail.objet || "").slice(0, 200), cle: cleVerrou(a, versMoteur(mail), conf, mail.id), mode: forcerOmbre ? "ombre" : crm.mode };
+    };
+    var lire = async (lead) => {
+      const a = api(), L2 = obj(lead, "lead");
+      const mail = await lireMail(L2.mail_id);
+      const { conf } = await charger();
+      const lecture = await G.optionsLecture(a).catch(() => ({}));
+      const d = await a.leads.etapeLire(versMoteur(mail), conf, { dossiers: { trouver: fil.trouver }, ...lecture });
+      return { ...d, mail_id: mail.id, mode: L2.mode || "ombre" };
+    };
+    var bien = async (dossier) => {
+      const d = obj(dossier);
+      if (d.fin) return d;
+      const { conf, crm } = await charger();
+      return api().leads.etapeBien(d, await clientCrm(crm, "ombre"), conf);
+    };
+    var contact = async (dossier) => {
+      const d = obj(dossier);
+      if (d.fin) return d;
+      const { conf, crm } = await charger();
+      return api().leads.etapeContact(d, await clientCrm(crm, "ombre"), conf);
+    };
+    var consentement = async (dossier) => {
+      const d = obj(dossier);
+      if (d.fin) return d;
+      const { conf } = await charger();
+      return api().leads.etapeConsentement(d, versMoteur(await lireMail(d.mail_id)), conf);
+    };
+    var destinataires = async (dossier) => {
+      const d = obj(dossier);
+      if (d.fin) return d;
+      const { conf } = await charger();
+      return api().leads.etapeDestinataires(d, conf);
+    };
+    var ecrireCrm = async (dossier) => {
+      const a = api(), d = obj(dossier);
+      const { crm } = await charger();
+      const mode = d.mode === "reel" && crm.mode === "reel" ? "reel" : "ombre";
+      const client = await clientCrm(crm, mode);
+      if (d.dossier && d.portail) d.dossier.portail = d.portail;
+      d.execution = { ...await a.leads.executer(d, client, { mode }), mode };
+      if (client.notees) d.execution.ecritures_notees = client.notees.map((x) => x && x.donnees && x.donnees.comment ? { ...x, donnees: { ...x.donnees, comment: `(${x.donnees.comment.length} caract\xE8res)` } } : x);
+      return d;
+    };
+    var ranger = async (dossier) => {
+      const a = api(), d = obj(dossier);
+      const mail = await lireMail(d.mail_id);
+      const garder = d.dossier && !(d.statut === "a_trier" && !d.dossier.existant);
+      const dossierId = garder ? await fil.enregistrer(a)(d, d.execution || {}, new Date(mail.date_envoi || Date.now()), mail.id) : null;
+      const propre = a.leads.nettoyer({ ...d });
+      delete propre.mail_id;
+      delete propre.mode;
+      const id = await enregistrer(propre, mail, dossierId);
+      return { id, dossier_id: dossierId, statut: d.statut };
+    };
+    module2.exports = { preparer, lire, bien, contact, consentement, destinataires, ecrireCrm, ranger };
+  }
+});
+
 // ../src/blocks.js
 var require_blocks = __commonJS({
   "../src/blocks.js"(exports2, module2) {
     "use strict";
     var { charger } = require_conf();
     var { enregistrer, traiterMail } = require_dossier();
+    var E2 = require_etapes();
+    var P_DOSSIER = { name: "dossier", label: "Dossier (\xE9tape pr\xE9c\xE9dente)", type: "json", default: "{{dossier}}" };
+    var etape = (name, label, icon, description, fn, timeout = 60) => ({ name, label, category: "Leads immobiliers", icon, output: "dossier", timeout, description, params: [P_DOSSIER], run: async (p) => fn(p.dossier) });
     module2.exports = [
       {
         name: "dzx_leads_conf",
@@ -2068,6 +2177,43 @@ var require_blocks = __commonJS({
         description: "Range le r\xE9sultat du traitement dans ld_leads (un lead par mail, mis \xE0 jour si le mail est retrait\xE9).",
         params: [{ name: "dossier", label: "Dossier", type: "json", default: "{{dossier}}" }, { name: "mail", label: "Mail", type: "json", default: "{{mail}}" }],
         run: async (p) => enregistrer(typeof p.dossier === "string" ? JSON.parse(p.dossier) : p.dossier, typeof p.mail === "string" ? JSON.parse(p.mail) : p.mail)
+      },
+      /* ── le traitement en étapes visibles (workflow ld_traitement v3) ── */
+      {
+        name: "dzx_leads_preparer",
+        label: "Leads : pr\xE9parer le mail re\xE7u",
+        category: "Leads immobiliers",
+        icon: "fas fa-inbox",
+        output: "lead",
+        description: "Prend le mail re\xE7u (ld_mails), le mode du client (ombre ou r\xE9el) et la personne qui \xE9crit : deux mails d'une m\xEAme personne sont trait\xE9s l'un apr\xE8s l'autre (verrou).",
+        params: [{ name: "id", label: "Id du mail (ld_mails)", default: "{{id}}", required: true }],
+        run: async (p) => E2.preparer(+p.id)
+      },
+      {
+        name: "dzx_leads_lire",
+        label: "Leads : lire le mail",
+        category: "Leads immobiliers",
+        icon: "fas fa-envelope-open-text",
+        output: "dossier",
+        timeout: 120,
+        description: "Lit le mail en trois \xE9tages : r\xE8gles des portails connus, gabarits appris tout seuls, IA en dernier recours (si r\xE9gl\xE9e). Portail, nature (lead, relance, non-lead\u2026), prospect, bien cit\xE9, message. Rattache le mail \xE0 la conversation du prospect. Un non-lead ou une r\xE9ponse de l'\xE9quipe s'arr\xEAte ici.",
+        params: [{ name: "lead", label: "Mail pr\xE9par\xE9", type: "json", default: "{{lead}}" }],
+        run: async (p) => E2.lire(p.lead)
+      },
+      etape("dzx_leads_bien", "Leads : retrouver le bien", "fas fa-search-location", "Catalogue local, puis CRM : identifiant, r\xE9f\xE9rence compl\xE8te, r\xE9f\xE9rence moins le dernier caract\xE8re, segments, puis crit\xE8res. Chaque bien trouv\xE9 est compar\xE9 au mail ; contradiction = rejet. Rattache le dossier existant du prospect pour ce bien.", E2.bien, 90),
+      etape("dzx_leads_contact", "Leads : agence, n\xE9gociateur et contact", "fas fa-address-card", "Agence (bien, compte du portail, bo\xEEte qui a re\xE7u, agence cit\xE9e) ; n\xE9gociateur du bien ; contact du CRM (e-mail d'abord, puis le plus r\xE9cent ; on compl\xE8te, on n'\xE9crase pas) ; origine ; plan d'\xE9criture dans le CRM (contact, suivi du bien, projet de recherche avec toute la conversation).", E2.contact, 90),
+      etape("dzx_leads_consentement", "Leads : consentement anti-d\xE9marchage", "fas fa-file-signature", "Ajoute au plan le consentement du prospect : date de la demande, motif \xAB Demande de contact via <portail> du <date> \xBB (r\xE9glable), et le mail d'origine (.eml) en preuve. Une seule fois par contact.", E2.consentement),
+      etape("dzx_leads_destinataires", "Leads : qui re\xE7oit ?", "fas fa-user-check", "N\xE9gociateur du bien, assistant(e), r\xE8gles d'envoi, cong\xE9s, mi-temps, si\xE8ge et copies. Une relance d'une conversation d\xE9j\xE0 suivie ne va qu'au n\xE9gociateur (r\xE9glable). Donne aussi le statut : pr\xEAt, \xE0 v\xE9rifier, \xE0 trier.", E2.destinataires),
+      etape("dzx_leads_crm", "Leads : \xE9crire dans le CRM", "fas fa-cloud-upload-alt", "Ex\xE9cute le plan (contact, suivi du bien, projet de recherche, consentement) selon le mode : en ombre, rien n'est \xE9crit, tout est not\xE9. Chaque \xE9criture est relue ; rejouer ne cr\xE9e pas de doublon.", E2.ecrireCrm, 120),
+      {
+        name: "dzx_leads_ranger",
+        label: "Leads : enregistrer le lead et la conversation",
+        category: "Leads immobiliers",
+        icon: "fas fa-save",
+        output: "resultat",
+        description: "Range le lead (ld_leads, visible dans les \xE9crans), le dossier du prospect (ld_dossiers) et la conversation (ld_evenements). Retraiter un mail met \xE0 jour la m\xEAme ligne.",
+        params: [P_DOSSIER],
+        run: async (p) => E2.ranger(p.dossier)
       }
     ];
   }

@@ -1,21 +1,21 @@
 {
-    "name":  "dysizz-leads",
-    "version":  "1.3.2",
-    "description":  "Plateforme de leads immobiliers pour Saltcorn (multi-clients) : lecture des mails (rÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨gles, gabarits appris automatiquement, IA en dernier recours), rapprochement du bien, contact, consentement anti-dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©marchage, rÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨gles d\u0027envoi par nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©gociateur, congÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©s et mi-temps, suivi des demandes. CRM : Immofacile, Salesforce. Construite avec les blocs de dysizz-ui et dysizz-flow.",
-    "main":  "index.js",
-    "author":  "Sidy Laye",
-    "license":  "MIT",
-    "repository":  "github:SidyLaye/saltcorn-dysizz-leads",
-    "keywords":  [
-                     "saltcorn",
-                     "saltcorn-plugin",
-                     "immobilier",
-                     "leads",
-                     "crm"
-                 ],
-    "files":  [
-                  "index.js",
-                  "README.md",
-                  "LICENSE"
-              ]
+    "name": "dysizz-leads",
+    "version": "1.4.0",
+    "description": "Plateforme de leads immobiliers pour Saltcorn (multi-clients) : lecture des mails (règles, gabarits appris automatiquement, IA en dernier recours), rapprochement du bien, contact, consentement anti-démarchage, règles d'envoi par négociateur, congés et mi-temps, suivi des demandes. CRM : Immofacile, Salesforce. Construite avec les blocs de dysizz-ui et dysizz-flow.",
+    "main": "index.js",
+    "author": "Sidy Laye",
+    "license": "MIT",
+    "repository": "github:SidyLaye/saltcorn-dysizz-leads",
+    "keywords": [
+        "saltcorn",
+        "saltcorn-plugin",
+        "immobilier",
+        "leads",
+        "crm"
+    ],
+    "files": [
+        "index.js",
+        "README.md",
+        "LICENSE"
+    ]
 }

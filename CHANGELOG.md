@@ -1,5 +1,19 @@
 # Journal des versions
 
+## 1.4.0
+
+- **Workflow `ld_traitement` en étapes visibles** (v3, 15 étapes), éditable dans l'éditeur de dysizz-flow : déjà traité ? → préparer → attendre son tour (verrou du prospect) → lire le mail → retrouver le bien → agence, négociateur et contact → **consentement anti-démarchage** → qui reçoit ? → écrire dans le CRM → enregistrer → rendre le verrou. En cas d'erreur : verrou rendu, exécution marquée en échec (la tâche horaire reprend le mail).
+- Un mail déjà traité arrête maintenant le workflow (avant, le bloc « Déjà traité ? » répondait mais le traitement continuait).
+- Huit nouveaux blocs (`dzx_leads_preparer`, `_lire`, `_bien`, `_contact`, `_consentement`, `_destinataires`, `_crm`, `_ranger`). Même moteur que le traitement en un bloc : résultat identique, vérifié sur 300 mails (aucun écart).
+- « Installer / réparer le workflow » passe les installations existantes en v3. Nécessite dysizz-flow 2.10.
+
+## 1.3.3
+
+- **Correctif** : sur une installation neuve, chaque mail échouait (« column source of relation ld_leads does not exist ») : la colonne `source` manquait au schéma de `ld_leads`. Elle est ajoutée au démarrage. Un test vérifie désormais que chaque colonne écrite existe.
+- **Rejouer en ombre** : en cas d'échec, l'écran donne la première erreur au lieu de « 50 en échec » seul.
+- Dépôt public : la règle propre à un client (adresses codées en dur) est retirée de l'import ; elle se crée dans l'écran Envoi comme toute autre règle. Exemples neutres dans les réglages et les tests.
+- Description du plugin : accents réparés.
+
 ## 1.2.0
 
 - **Lecture des mails** (nouvel onglet) : part des mails lus par les règles, par un gabarit appris, complétés par l'IA ; appels d'IA du jour et plafond ; liste des gabarits appris (champs lus, observations, échecs, suspendre / activer) ; import de `gabarit_version.json` de l'ancien AMBS.

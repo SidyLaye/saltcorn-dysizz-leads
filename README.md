@@ -4,10 +4,10 @@ Plateforme de leads immobiliers pour Saltcorn. Un mail arrive d'un portail (Lebo
 
 Elle est construite avec les deux autres briques :
 
-- **dysizz-flow** (2.4 ou plus récent) : le moteur (lecture des mails, rapprochement du bien, contact, routage, CRM), l'écouteur de boîte mail en temps réel, et les blocs du workflow ;
+- **dysizz-flow** (2.10 ou plus récent) : le moteur (lecture des mails, rapprochement du bien, contact, routage, CRM), l'écouteur de boîte mail en temps réel, et les blocs du workflow ;
 - **dysizz-ui** : l'apparence générale.
 
-Ce plugin apporte les tables, les écrans, le workflow `ld_traitement` et deux blocs (`dzx_leads_conf`, `dzx_leads_enregistrer`).
+Ce plugin apporte les tables, les écrans, le workflow `ld_traitement` et ses blocs (`dzx_leads_*`). Le workflow montre chaque étape dans l'éditeur de dysizz-flow : déjà traité ? → préparer → attendre son tour → lire → bien → contact → consentement → qui reçoit ? → CRM → enregistrer.
 
 ## Multi-clients
 
@@ -54,7 +54,7 @@ Accès : administrateurs et rôle « staff » ; les réglages, l'import et les �
 
 ## Mise en route
 
-1. Installer dysizz-ui, dysizz-flow (2.4+), puis dysizz-leads.
+1. Installer dysizz-ui, dysizz-flow (2.10+), puis dysizz-leads.
 2. `/leads/import` : charger les fichiers de la sauvegarde (dossier `tables/`).
 3. `/leads/reglages` : CRM (site_id et identifiants), boîte à écouter, sites d'agence, siège ; « Installer / réparer le workflow » ; « Tester la connexion au CRM ».
 4. Laisser tourner en ombre, comparer dans Leads (filtre « écarts avec l'ancien système ») ; passer en réel quand tout est bon.

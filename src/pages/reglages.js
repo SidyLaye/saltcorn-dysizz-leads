@@ -70,7 +70,7 @@ ${U.champ("", U.coche("m_actif", e ? e.actif : false, "Écouter cette boîte (le
 ${e ? `<p class="ld-mute" style="margin:8px 0 0">État : ${esc(e.etat || "—")} · ${+e.recus || 0} mail(s) reçu(s)${e.erreur ? " · " + esc(e.erreur) : ""}</p>` : ""}`)}
 ${U.carte("Reconnaissance", `<div class="ld-form">
 ${U.champ("Domaines de l'agence", U.zone("domaines_agence", liste(R.domaines_agence).join("\n"), 4), "un par ligne : les mails venant de ces domaines sont internes (transferts dépliés)")}
-${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R.sites), 5, { placeholder: "selectionhabitat.com | SELECTION HABITAT / SH | selectionhabitat_com | Sélection Habitat" }), "domaine | alias | code origine CRM | nom métier")}
+${U.champ("Sites d'agence", U.zone("sites", sitesTexte(R.sites), 5, { placeholder: "agence-exemple.fr | AGENCE EXEMPLE / AE | agence_exemple_fr | Agence Exemple" }), "domaine | alias | code origine CRM | nom métier")}
 ${U.champ("Objets des campagnes (réponses à trier)", U.zone("objets_campagnes", R.objets_campagnes || "", 3))}
 ${U.champ("Identifiant CRM dans les liens (motif)", U.zone("id_crm_liens", R.id_crm_liens || "", 2), "un motif par ligne ; ex. immo-facile-(\\d{8})\\b (8 chiffres : un bien ; 6 chiffres : c'est une agence)")}
 ${U.champ("Portail → origine (JSON)", U.zone("origines_portail", typeof R.origines_portail === "string" ? R.origines_portail : JSON.stringify(R.origines_portail || {}), 4), '{"leboncoin":"leboncoin","seloger":"se_loger"}')}
@@ -142,7 +142,6 @@ const importPage = async (req, res) => {
 <p>Pour comparer avec l'ancien système, ajoute le fichier <code>comparaison-ancien.json</code> (fabriqué depuis la sauvegarde par <code>tools/comparaison-sauvegarde.py</code>) : chaque lead est relié au résultat de l'ancien (statut, bien, destinataires) par le numéro du mail dans la boîte.</p>
 <p class="ld-mute">Aujourd'hui : ${n.agences} agence(s), ${n.personnes} personne(s), ${n.origines} origine(s). L'import complète et met à jour, il ne supprime rien.</p>
 <form method="post" action="/leads/import" enctype="multipart/form-data">${hidden(req)}<input class="form-control form-control-sm" type="file" name="fichiers" multiple accept=".json" required>
-<div class="ld-actions">${U.coche("senegal", false, "Reprendre la règle codée en dur de l'ancien système (négociateurs @selectionsenegal.com → assistante seule gemma@selectionhabitat.com)")}</div>
 <div class="ld-actions"><button class="btn btn-sm btn-primary">Importer</button></div></form>`)}
 ${U.carte("Rejouer en ombre", `<p>${sans} mail(s) reçu(s) n'ont pas encore de lead. Ils sont traités en mode ombre (CRM lu, rien d'écrit), par lots de 50.</p><form method="post" action="/leads/import/rejouer">${hidden(req)}<button class="btn btn-sm btn-outline-primary" ${sans ? "" : "disabled"}>Traiter 50 mails</button></form>`)}`;
   U.page(req, res, "Import", "import", html);
@@ -188,11 +187,6 @@ const importPost = async (req, res) => {
     }
     log.push("destinataires en plus → siège et règles");
   }
-  if ((req.body || {}).senegal === "on" && !(await t.regles.getRow({ libelle: "Sénégal : assistante seule" }))) {
-    const P = await t.personnes.getRows({});
-    const ids = P.filter((p) => /@selectionsenegal\.com$/.test(p.email || "") && p.role !== "assistante" && ["voury", "christophe", "claude", "josephine"].includes(String(p.email).split("@")[0])).map((p) => "p:" + p.id);
-    if (ids.length) { await t.regles.insertRow({ libelle: "Sénégal : assistante seule", tous: false, negociateurs: ids.join(","), couper_negociateur: true, assistante: "remplacer", assistante_remplacante: "gemma@selectionhabitat.com", adresses_libres: "", actif: true, maj_le: new Date() }); log.push("règle Sénégal"); }
-  }
   const comp = Object.entries(F).find(([k, v]) => /^comparaison/.test(k) && Array.isArray(v));
   if (comp) {
     const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
@@ -211,9 +205,9 @@ const rejouer = async (req, res) => {
   if (!isAdmin(req)) return refuse(res);
   const db = require("@saltcorn/data/db"), S = db.getTenantSchema();
   const ids = (await db.query(`select m.id from "${S}".${MAILS} m where not exists (select 1 from "${S}".ld_leads l where l.mail_id = m.id) order by m.date_envoi, m.id limit 50`)).rows.map((r) => r.id);
-  let ok = 0, ko = 0;
-  for (const id of ids) { try { await retraiter(id, { forcerOmbre: true }); ok++; } catch (e) { ko++; } }
-  go(res, "/leads/import", `${ok} mail(s) traité(s) en ombre${ko ? `, ${ko} en échec` : ""}`, !!ko && !ok);
+  let ok = 0, ko = 0, raison = "";
+  for (const id of ids) { try { await retraiter(id, { forcerOmbre: true }); ok++; } catch (e) { ko++; if (!raison) raison = String(e.message || e).slice(0, 200); } }
+  go(res, "/leads/import", `${ok} mail(s) traité(s) en ombre${ko ? `, ${ko} en échec (1re erreur : ${raison})` : ""}`, !!ko && !ok);
 };
 
 module.exports = { page, enregistrer, tester, installerPost, importPage, importPost, rejouer, sitesLire };
